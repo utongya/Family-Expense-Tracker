@@ -1,69 +1,195 @@
-import Image from "next/image";
+import { Dashboard } from "@/components/dashboard";
+import { createDemoData } from "@/lib/demo-data";
+import type { DashboardData, DashboardSummary } from "@/lib/types";
+import { createClient } from "@/lib/supabase/server";
+import { connection } from "next/server";
+import { Suspense } from "react";
+
+function hasSupabaseConfig() {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  );
+}
+
+function bangkokDateString(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const part = (type: string) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#f7f8f6]">
+          <p className="text-[12px] text-[#718078]">กำลังเตรียมข้อมูลครอบครัว...</p>
+        </main>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
   );
 }
+
+async function DashboardContent() {
+  await connection();
+  const demoData = createDemoData();
+
+  if (!hasSupabaseConfig()) {
+    return (
+      <Dashboard
+        initialData={demoData}
+        isDemo
+        userName="ครอบครัวสุขใจ"
+      />
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return (
+      <Dashboard
+        initialData={demoData}
+        isDemo
+        userName="ครอบครัวสุขใจ"
+      />
+    );
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("users")
+    .select("family_id, display_name, role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError || !profile) {
+    return (
+      <Dashboard
+        initialData={emptyData}
+        isDemo={false}
+        userName={user.email ?? "สมาชิก"}
+        dataError={
+          profileError?.message ??
+          "ไม่พบโปรไฟล์ครอบครัว กรุณาตรวจสอบการตั้งค่า Supabase"
+        }
+      />
+    );
+  }
+
+  const today = new Date();
+  const todayParts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(today);
+  const todayPart = (type: string) =>
+    Number(todayParts.find((item) => item.type === type)?.value);
+  const monthStart = `${todayPart("year")}-${`${todayPart("month")}`.padStart(2, "0")}-01`;
+  const last30DaysStart = bangkokDateString(
+    new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000),
+  );
+  const dataStart = monthStart < last30DaysStart ? monthStart : last30DaysStart;
+
+  const [
+    { data: categories, error: categoryError },
+    { data: budgets, error: budgetError },
+    { data: expenses, error: expenseError },
+  ] = await Promise.all([
+    supabase.from("categories").select("id, name, icon").order("created_at"),
+    supabase
+      .from("budgets")
+      .select("id, category_id, amount")
+      .eq("period_month", monthStart),
+    supabase
+      .from("expenses")
+      .select("id, category_id, amount, expense_date, note, user_id")
+      .gte("expense_date", dataStart)
+      .order("expense_date", { ascending: false })
+      .limit(500),
+  ]);
+
+  const queryError = categoryError ?? budgetError ?? expenseError;
+  const initialData: DashboardData = {
+    categories: (categories ?? []).map((category) => ({
+      id: category.id,
+      name: category.name,
+      icon: category.icon ?? "shapes",
+    })),
+    budgets: (budgets ?? []).map((budget) => ({
+      id: budget.id,
+      categoryId: budget.category_id,
+      amount: Number(budget.amount),
+    })),
+    expenses: (expenses ?? []).map((expense) => ({
+      id: expense.id,
+      categoryId: expense.category_id,
+      amount: Number(expense.amount),
+      date: expense.expense_date,
+      note: expense.note ?? "",
+      userId: expense.user_id,
+    })),
+  };
+  const monthRows = initialData.expenses.filter(
+    (expense) => expense.date >= monthStart,
+  );
+  const dailyTotals = Array.from({ length: 30 }, (_, index) => {
+    const date = new Date(
+      Date.UTC(todayPart("year"), todayPart("month") - 1, todayPart("day") - (29 - index)),
+    );
+    const dateKey = bangkokDateString(date);
+    return {
+      date: dateKey,
+      label: new Intl.DateTimeFormat("th-TH", { day: "numeric" }).format(date),
+      total: initialData.expenses
+        .filter((expense) => expense.date === dateKey)
+        .reduce((sum, expense) => sum + expense.amount, 0),
+    };
+  });
+  const initialSummary: DashboardSummary = {
+    totalMonth: monthRows.reduce((sum, expense) => sum + expense.amount, 0),
+    totalBudget: initialData.budgets.reduce(
+      (sum, budget) => sum + budget.amount,
+      0,
+    ),
+    categoryTotals: Object.fromEntries(
+      initialData.categories.map((category) => [
+        category.id,
+        monthRows
+          .filter((expense) => expense.categoryId === category.id)
+          .reduce((sum, expense) => sum + expense.amount, 0),
+      ]),
+    ),
+    dailyTotals,
+  };
+
+  return (
+    <Dashboard
+      initialData={initialData}
+      initialSummary={initialSummary}
+      isDemo={false}
+      userName={profile.display_name || user.email || "สมาชิก"}
+      familyId={profile.family_id}
+      userId={user.id}
+      isAdmin={profile.role === "admin"}
+      dataError={queryError?.message}
+    />
+  );
+}
+
+const emptyData: DashboardData = {
+  categories: [],
+  budgets: [],
+  expenses: [],
+};
