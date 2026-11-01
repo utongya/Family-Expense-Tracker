@@ -106,7 +106,7 @@ begin
     (new_family_id, 'อาหาร และเครื่องดื่ม', 'utensils'),
     (new_family_id, 'ช็อปปิ้ง', 'shopping-bag'),
     (new_family_id, 'ค่างวดบ้าน', 'house'),
-    (new_family_id, 'ค่างวด SAM', 'car'),
+    (new_family_id, 'ค่างวด SAM', 'landmark'),
     (new_family_id, 'สาธารณูปโภค', 'lightbulb'),
     (new_family_id, 'คชจ.ฮาโกะ/ฮาซิ', 'paw-print'),
     (new_family_id, 'ของใช้เบ็ดเตล็ด', 'package'),

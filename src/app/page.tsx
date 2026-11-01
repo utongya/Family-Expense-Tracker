@@ -28,7 +28,7 @@ export default function Home() {
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#f7f8f6]">
+        <main className="flex min-h-screen items-center justify-center bg-[#f8f6ff]">
           <p className="text-[12px] text-[#718078]">กำลังเตรียมข้อมูลครอบครัว...</p>
         </main>
       }

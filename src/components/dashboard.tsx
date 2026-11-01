@@ -14,6 +14,7 @@ import {
   CreditCard,
   House,
   LayoutDashboard,
+  Landmark,
   Lightbulb,
   LogOut,
   Menu,
@@ -88,15 +89,15 @@ const navItems: { id: PageKey; label: string; icon: LucideIcon }[] = [
 ];
 
 const categoryColors = [
-  "#3b8c68",
-  "#e6a65d",
-  "#8b85c7",
-  "#e28b83",
-  "#5ba9b5",
-  "#da7898",
-  "#7fa56a",
-  "#7391cf",
-  "#a9a79e",
+  "#8b5cf6",
+  "#f59e0b",
+  "#ec4899",
+  "#14b8a6",
+  "#6366f1",
+  "#f97316",
+  "#22c55e",
+  "#06b6d4",
+  "#a855f7",
 ];
 
 const categoryIcons: Record<string, LucideIcon> = {
@@ -104,6 +105,7 @@ const categoryIcons: Record<string, LucideIcon> = {
   "shopping-bag": ShoppingBag,
   house: House,
   car: Car,
+  landmark: Landmark,
   lightbulb: Lightbulb,
   "paw-print": PawPrint,
   package: Package,
@@ -154,7 +156,7 @@ function getMonthLabel(date: Date) {
     year: "numeric",
   }).format(date);
 }
-
+ 
 export function Dashboard({
   initialData,
   initialSummary,
@@ -483,7 +485,7 @@ export function Dashboard({
   const avatarLetters = userName.slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-[#f7f8f6] text-[#252a27]">
+    <div className="min-h-screen bg-[#f8f6ff] text-[#252a27]">
       <aside
         className={`fixed inset-y-0 left-0 z-40 flex w-[258px] flex-col border-r border-[#e9ece8] bg-white px-5 py-6 transition-transform duration-200 lg:translate-x-0 ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
@@ -491,7 +493,7 @@ export function Dashboard({
       >
         <div className="mb-9 flex items-center justify-between px-1">
           <Link href="/" className="flex items-center gap-3" onClick={() => navigateTo("overview")}>
-            <span className="flex size-10 items-center justify-center rounded-[14px] bg-[#e9f3ed] text-[#3b8c68]">
+            <span className="flex size-10 items-center justify-center rounded-[14px] bg-[#efe7ff] text-[#7c3aed]">
               <House size={21} strokeWidth={2.3} />
             </span>
             <span>
@@ -518,8 +520,8 @@ export function Dashboard({
               onClick={() => navigateTo(id)}
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-medium transition ${
                 activePage === id
-                  ? "bg-[#edf5ef] text-[#347c5a]"
-                  : "text-[#78827c] hover:bg-[#f7f8f6] hover:text-[#333a35]"
+                  ? "bg-[#f3edff] text-[#6d28d9]"
+                  : "text-[#78827c] hover:bg-[#f8f6ff] hover:text-[#333a35]"
               }`}
             >
               <Icon size={18} strokeWidth={1.9} />
@@ -544,13 +546,13 @@ export function Dashboard({
             </p>
             <button
               onClick={() => navigateTo("budgets")}
-              className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#478264]"
+              className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#7c3aed]"
             >
               ดูงบประมาณ <ArrowRight size={13} />
             </button>
           </div>
           <div className="flex items-center gap-3 border-t border-[#eef0ed] px-1 pt-4">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#e9f0ea] text-[11px] font-bold text-[#4e7a5c]">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#efe7ff] text-[11px] font-bold text-[#6d28d9]">
               {avatarLetters}
             </span>
             <div className="min-w-0 flex-1">
@@ -615,7 +617,7 @@ export function Dashboard({
             </button>
             <button
               onClick={openAddExpense}
-              className="flex items-center gap-2 rounded-xl bg-[#347d59] px-3 py-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#286b4a] sm:px-4 sm:text-[12px]"
+              className="flex items-center gap-2 rounded-xl bg-[#7c3aed] px-3 py-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#6d28d9] sm:px-4 sm:text-[12px]"
             >
               <Plus size={16} />
               <span className="hidden sm:inline">เพิ่มรายการ</span>
@@ -640,7 +642,7 @@ export function Dashboard({
               </div>
               <Link
                 href="/auth"
-                className="ml-11 flex shrink-0 items-center gap-1 text-[11px] font-semibold text-[#3c7454] hover:underline sm:ml-0"
+                className="ml-11 flex shrink-0 items-center gap-1 text-[11px] font-semibold text-[#7c3aed] hover:underline sm:ml-0"
               >
                 ตั้งค่าบัญชี <ArrowRight size={13} />
               </Link>
@@ -791,7 +793,7 @@ function OverviewPage({
         </div>
         <button
           onClick={onAddExpense}
-          className="flex w-fit items-center gap-2 rounded-xl border border-[#dce7de] bg-white px-4 py-2.5 text-[11px] font-semibold text-[#427557] shadow-sm hover:bg-[#f7faf7]"
+          className="flex w-fit items-center gap-2 rounded-xl border border-[#e7defa] bg-white px-4 py-2.5 text-[11px] font-semibold text-[#6d28d9] shadow-sm hover:bg-[#faf8ff]"
         >
           <Plus size={15} /> บันทึกรายจ่าย
         </button>
@@ -803,8 +805,8 @@ function OverviewPage({
           value={currency(totalMonth)}
           helper={monthName}
           icon={Wallet}
-          iconBg="bg-[#e9f3ed]"
-          iconColor="text-[#3b8c68]"
+          iconBg="bg-[#efe7ff]"
+          iconColor="text-[#7c3aed]"
           delta={<span className="text-[#b07c50]">สรุปรายจ่ายทั้งหมด</span>}
         />
         <SummaryCard
@@ -883,12 +885,12 @@ function OverviewPage({
                       : label
                   }
                 />
-                <Bar dataKey="total" fill="#77a887" radius={[5, 5, 0, 0]} maxBarSize={17} />
+                <Bar dataKey="total" fill="#8b5cf6" radius={[5, 5, 0, 0]} maxBarSize={17} />
               </BarChart>
             </ResponsiveContainer>
           </div>
           <div className="mt-2 flex items-center gap-2 text-[10px] text-[#9aa39c]">
-            <span className="size-2 rounded-sm bg-[#77a887]" />
+            <span className="size-2 rounded-sm bg-[#8b5cf6]" />
             ยอดใช้จ่ายรายวัน
             <span className="ml-auto text-[#a2aaa4]">สูงสุด {currency(maxDaily)}</span>
           </div>
@@ -968,7 +970,7 @@ function OverviewPage({
               <h3 className="text-[14px] font-bold">รายการล่าสุด</h3>
               <p className="mt-1 text-[11px] text-[#99a19b]">ค่าใช้จ่ายของครอบครัว</p>
             </div>
-            <button onClick={onOpenExpenses} className="flex items-center gap-1 text-[10px] font-semibold text-[#548267] hover:underline">
+            <button onClick={onOpenExpenses} className="flex items-center gap-1 text-[10px] font-semibold text-[#7c3aed] hover:underline">
               ดูทั้งหมด <ArrowRight size={13} />
             </button>
           </div>
@@ -1017,7 +1019,7 @@ function OverviewPage({
             })}
           </div>
           {data.budgets.length > 5 && (
-            <button className="mt-4 flex items-center gap-1 text-[10px] font-semibold text-[#548267] hover:underline">
+            <button className="mt-4 flex items-center gap-1 text-[10px] font-semibold text-[#7c3aed] hover:underline">
               จัดการงบประมาณ <ArrowRight size={13} />
             </button>
           )}
@@ -1165,7 +1167,7 @@ function ExpensesPage({
           <p className="text-[11px] text-[#98a29b]">จัดการและติดตามรายจ่ายของทุกคนในบ้าน</p>
           <h2 className="mt-1.5 text-[21px] font-bold">รายการใช้จ่ายทั้งหมด</h2>
         </div>
-        <button onClick={onAdd} className="flex w-fit items-center gap-2 rounded-xl bg-[#347d59] px-4 py-2.5 text-[11px] font-semibold text-white hover:bg-[#286b4a]">
+        <button onClick={onAdd} className="flex w-fit items-center gap-2 rounded-xl bg-[#7c3aed] px-4 py-2.5 text-[11px] font-semibold text-white hover:bg-[#6d28d9]">
           <Plus size={15} /> เพิ่มรายการใหม่
         </button>
       </div>
@@ -1270,7 +1272,7 @@ function BudgetsPage({
         <div className="space-y-5">
           <div className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
             <div className="mb-4 flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-xl bg-[#edf5ef] text-[#538568]"><Sparkles size={15} /></span>
+              <span className="flex size-8 items-center justify-center rounded-xl bg-[#f3edff] text-[#7c3aed]"><Sparkles size={15} /></span>
               <div>
                 <h3 className="text-[13px] font-bold">เพิ่มหมวดหมู่</h3>
                 <p className="mt-0.5 text-[10px] text-[#99a19b]">สร้างหมวดหมู่ที่เหมาะกับบ้านคุณ</p>
@@ -1283,9 +1285,9 @@ function BudgetsPage({
                   onChange={(event) => setNewCategory(event.target.value)}
                   maxLength={40}
                   placeholder="ชื่อหมวดหมู่"
-                  className="min-w-0 flex-1 rounded-xl border border-[#e6eae6] px-3 py-2.5 text-[11px] outline-none transition focus:border-[#87ae94]"
+                  className="min-w-0 flex-1 rounded-xl border border-[#e7e2ee] px-3 py-2.5 text-[11px] outline-none transition focus:border-[#a78bfa]"
                 />
-                <button type="submit" className="flex items-center gap-1.5 rounded-xl bg-[#347d59] px-3 text-[10px] font-semibold text-white hover:bg-[#286b4a]">
+                <button type="submit" className="flex items-center gap-1.5 rounded-xl bg-[#7c3aed] px-3 text-[10px] font-semibold text-white hover:bg-[#6d28d9]">
                   <Plus size={14} /> เพิ่ม
                 </button>
               </form>
@@ -1303,12 +1305,12 @@ function BudgetsPage({
                         maxLength={80}
                         onChange={(event) => setCategoryNameDraft(event.target.value)}
                         aria-label={`ชื่อหมวดหมู่ ${category.name}`}
-                        className="min-w-0 flex-1 rounded-lg border border-[#dce5dd] px-2 py-1.5 text-[10px] outline-none focus:border-[#87ae94]"
+                        className="min-w-0 flex-1 rounded-lg border border-[#e7e2ee] px-2 py-1.5 text-[10px] outline-none focus:border-[#a78bfa]"
                       />
                       <button
                         onClick={() => onRenameCategory(category)}
                         aria-label="บันทึกชื่อหมวดหมู่"
-                        className="rounded-md bg-[#edf5ef] p-1.5 text-[#427557]"
+                        className="rounded-md bg-[#f3edff] p-1.5 text-[#6d28d9]"
                       >
                         <Check size={13} />
                       </button>
@@ -1414,7 +1416,7 @@ function BudgetRow({
                   aria-label={`งบประมาณ${category.name}`}
                   className="w-24 rounded-md border border-[#dce5dd] px-2 py-1 text-[10px] text-[#364238] outline-none"
                 />
-                <button type="submit" aria-label="บันทึกงบ" className="rounded-md bg-[#edf5ef] p-1 text-[#427557]"><Check size={13} /></button>
+                <button type="submit" aria-label="บันทึกงบ" className="rounded-md bg-[#f3edff] p-1 text-[#6d28d9]"><Check size={13} /></button>
                 <button type="button" aria-label="ยกเลิก" onClick={() => setEditing(false)} className="rounded-md p-1 text-[#909a93]"><X size={13} /></button>
               </form>
             ) : (
@@ -1423,7 +1425,7 @@ function BudgetRow({
                 {canManage && (
                   <button
                     onClick={() => { setValue(String(budget || "")); setEditing(true); }}
-                    className="flex items-center gap-1 font-semibold text-[#568367] hover:underline"
+                    className="flex items-center gap-1 font-semibold text-[#7c3aed] hover:underline"
                   >
                     <Pencil size={11} /> ตั้งงบ
                   </button>
@@ -1456,7 +1458,7 @@ function SettingsPage({
       </div>
       <div className="max-w-3xl rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-7">
         <div className="flex items-center gap-4 border-b border-[#eff1ee] pb-5">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-[#e9f3ed] text-[14px] font-bold text-[#437858]">{userName.slice(0, 2)}</span>
+          <span className="flex size-12 items-center justify-center rounded-2xl bg-[#efe7ff] text-[14px] font-bold text-[#6d28d9]">{userName.slice(0, 2)}</span>
           <div>
             <h3 className="text-[14px] font-bold">{userName}</h3>
             <p className="mt-1 text-[10px] text-[#929c95]">{isDemo ? "กำลังใช้ข้อมูลตัวอย่าง" : isAdmin ? "ผู้ดูแลครอบครัว" : "สมาชิกครอบครัว"}</p>
@@ -1467,13 +1469,13 @@ function SettingsPage({
           <SettingLine label="สกุลเงิน" value="บาทไทย (฿)" />
           <SettingLine label="ข้อมูลครอบครัว" value={isDemo ? "โหมดตัวอย่าง" : "ข้อมูลส่วนตัวและรายจ่าย"} />
         </div>
-        <div className="rounded-xl bg-[#f7f8f6] p-4">
+        <div className="rounded-xl bg-[#f8f6ff] p-4">
           <p className="text-[11px] font-semibold">ข้อมูลของคุณปลอดภัย</p>
           <p className="mt-1.5 text-[10px] leading-5 text-[#89938c]">ข้อมูลครอบครัวถูกแยกตามสิทธิ์การเข้าถึง และจัดเก็บด้วย Supabase Row Level Security</p>
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
           {isDemo ? (
-            <Link href="/auth" className="rounded-xl bg-[#347d59] px-4 py-2.5 text-[11px] font-semibold text-white hover:bg-[#286b4a]">เข้าสู่ระบบ / สมัครสมาชิก</Link>
+            <Link href="/auth" className="rounded-xl bg-[#7c3aed] px-4 py-2.5 text-[11px] font-semibold text-white hover:bg-[#6d28d9]">เข้าสู่ระบบ / สมัครสมาชิก</Link>
           ) : (
             <button onClick={onSignOut} className="flex items-center gap-2 rounded-xl border border-[#eadfdb] px-4 py-2.5 text-[11px] font-semibold text-[#ad6354] hover:bg-[#fff8f6]">
               <LogOut size={14} /> ออกจากระบบ
@@ -1499,7 +1501,7 @@ function MiniMetric({ label, value, icon: Icon }: { label: string; value: string
     <div className="rounded-2xl border border-[#e9ece8] bg-white p-4">
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-[#929c95]">{label}</p>
-        <Icon size={16} className="text-[#8aab94]" />
+        <Icon size={16} className="text-[#a78bfa]" />
       </div>
       <p className="mt-2 text-[17px] font-bold">{value}</p>
     </div>
@@ -1553,7 +1555,7 @@ function ExpenseDialog({
         <form onSubmit={onSubmit} className="space-y-4">
           <label className="block">
             <span className="mb-1.5 block text-[10px] font-semibold text-[#647067]">จำนวนเงิน (บาท)</span>
-            <div className="flex items-center rounded-xl border border-[#e5eae5] px-3 focus-within:border-[#8caf95]">
+            <div className="flex items-center rounded-xl border border-[#e7e2ee] px-3 focus-within:border-[#a78bfa]">
               <span className="text-[13px] text-[#a2aaa4]">฿</span>
               <input
                 type="number"
@@ -1574,7 +1576,7 @@ function ExpenseDialog({
               required
               value={form.categoryId}
               onChange={(event) => onChange({ ...form, categoryId: event.target.value })}
-              className="w-full appearance-none rounded-xl border border-[#e5eae5] bg-white px-3 py-3 text-[11px] outline-none focus:border-[#8caf95]"
+              className="w-full appearance-none rounded-xl border border-[#e7e2ee] bg-white px-3 py-3 text-[11px] outline-none focus:border-[#a78bfa]"
             >
               <option value="" disabled>เลือกหมวดหมู่</option>
               {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
@@ -1587,7 +1589,7 @@ function ExpenseDialog({
               required
               value={form.date}
               onChange={(event) => onChange({ ...form, date: event.target.value })}
-              className="w-full rounded-xl border border-[#e5eae5] bg-white px-3 py-3 text-[11px] outline-none focus:border-[#8caf95]"
+              className="w-full rounded-xl border border-[#e7e2ee] bg-white px-3 py-3 text-[11px] outline-none focus:border-[#a78bfa]"
             />
           </label>
           <label className="block">
@@ -1598,12 +1600,12 @@ function ExpenseDialog({
               value={form.note}
               onChange={(event) => onChange({ ...form, note: event.target.value })}
               placeholder="เช่น ซื้อของเข้าบ้าน"
-              className="w-full resize-none rounded-xl border border-[#e5eae5] px-3 py-3 text-[11px] outline-none placeholder:text-[#aeb6af] focus:border-[#8caf95]"
+              className="w-full resize-none rounded-xl border border-[#e7e2ee] px-3 py-3 text-[11px] outline-none placeholder:text-[#aeb6af] focus:border-[#a78bfa]"
             />
           </label>
           <div className="flex gap-2 pt-1">
             <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-[#e5eae5] py-3 text-[11px] font-semibold text-[#657168] hover:bg-[#f7f8f7]">ยกเลิก</button>
-            <button disabled={saving} type="submit" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#347d59] py-3 text-[11px] font-semibold text-white hover:bg-[#286b4a] disabled:cursor-wait disabled:opacity-70">
+            <button disabled={saving} type="submit" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#7c3aed] py-3 text-[11px] font-semibold text-white hover:bg-[#6d28d9] disabled:cursor-wait disabled:opacity-70">
               {saving ? "กำลังบันทึก..." : <><Check size={14} /> {editing ? "บันทึกการแก้ไข" : "บันทึกรายการ"}</>}
             </button>
           </div>

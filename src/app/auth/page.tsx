@@ -3,7 +3,7 @@
 import { ArrowLeft, House, LockKeyhole, Mail, Sparkles, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const isConfigured = Boolean(
@@ -19,6 +19,15 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error")) {
+      const reason = params.get("reason");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMessage(`เข้าสู่ระบบด้วย Google ไม่สำเร็จ${reason ? `: ${reason}` : ""}`);
+    }
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -94,20 +103,20 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="grid min-h-screen bg-[#f7f8f6] lg:grid-cols-[1fr_1fr]">
-      <section className="relative hidden overflow-hidden bg-[#edf4ee] p-12 lg:flex lg:flex-col lg:justify-between xl:p-16">
-        <div className="absolute -right-28 -top-24 size-[440px] rounded-full border border-[#dce9de]" />
-        <div className="absolute -right-12 -top-8 size-[310px] rounded-full border border-[#dce9de]" />
-        <div className="absolute -bottom-32 -left-28 size-[390px] rounded-full bg-[#e2eee4]" />
+    <main className="grid min-h-screen bg-[#f8f6ff] lg:grid-cols-[1fr_1fr]">
+      <section className="relative hidden overflow-hidden bg-[#f1eaff] p-12 lg:flex lg:flex-col lg:justify-between xl:p-16">
+        <div className="absolute -right-28 -top-24 size-[440px] rounded-full border border-[#e4d8ff]" />
+        <div className="absolute -right-12 -top-8 size-[310px] rounded-full border border-[#e4d8ff]" />
+        <div className="absolute -bottom-32 -left-28 size-[390px] rounded-full bg-[#e7dcff]" />
         <Link href="/" className="relative z-10 flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-[14px] bg-white text-[#3b8c68] shadow-sm"><House size={21} /></span>
+          <span className="flex size-10 items-center justify-center rounded-[14px] bg-white text-[#7c3aed] shadow-sm"><House size={21} /></span>
           <span>
             <span className="block text-[16px] font-bold">บ้านอุ่นใจ</span>
             <span className="mt-0.5 block text-[10px] tracking-[0.14em] text-[#97a19a]">FAMILY FINANCE</span>
           </span>
         </Link>
         <div className="relative z-10 max-w-[480px] py-16">
-          <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[10px] font-semibold text-[#568264]">
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 text-[10px] font-semibold text-[#7c3aed]">
             <Sparkles size={13} /> วางแผนการเงินไปด้วยกัน
           </span>
           <h1 className="text-[36px] font-bold leading-[1.35] tracking-tight text-[#2d3e32] xl:text-[42px]">
@@ -115,7 +124,7 @@ export default function AuthPage() {
             <br />
             เพื่อทุกความสุข
             <br />
-            <span className="text-[#56906a]">ของครอบครัว</span>
+            <span className="text-[#7c3aed]">ของครอบครัว</span>
           </h1>
           <p className="mt-5 max-w-[370px] text-[13px] leading-7 text-[#738477]">
             บันทึกรายจ่าย วางแผนงบประมาณ และมองเห็นภาพรวมการเงินของทุกคนในบ้านได้ง่าย ๆ
@@ -123,7 +132,7 @@ export default function AuthPage() {
           <div className="mt-10 flex items-center gap-3">
             <div className="flex -space-x-2">
               {["ส", "น", "ม"].map((letter, index) => (
-                <span key={letter} className={`flex size-8 items-center justify-center rounded-full border-2 border-[#edf4ee] text-[10px] font-bold text-white ${["bg-[#7fa889]", "bg-[#d09b68]", "bg-[#8a8ac0]"][index]}`}>{letter}</span>
+                <span key={letter} className={`flex size-8 items-center justify-center rounded-full border-2 border-[#f1eaff] text-[10px] font-bold text-white ${["bg-[#8b5cf6]", "bg-[#ec4899]", "bg-[#6366f1]"][index]}`}>{letter}</span>
               ))}
             </div>
             <p className="text-[10px] text-[#87968a]">ช่วยกันดูแลบ้าน ในทุกวัน</p>
@@ -150,7 +159,7 @@ export default function AuthPage() {
         </div>
         <div className="mx-auto flex w-full max-w-[390px] flex-1 flex-col justify-center py-12">
           <div className="mb-7 lg:hidden">
-            <span className="flex size-11 items-center justify-center rounded-[15px] bg-[#edf4ee] text-[#3b8c68]"><House size={22} /></span>
+            <span className="flex size-11 items-center justify-center rounded-[15px] bg-[#f1eaff] text-[#7c3aed]"><House size={22} /></span>
           </div>
           <p className="text-[11px] font-medium text-[#84a08a]">{mode === "signup" ? "เริ่มต้นสร้างพื้นที่ของครอบครัว" : "ยินดีต้อนรับกลับมา"}</p>
           <h2 className="mt-2 text-[25px] font-bold tracking-tight">{mode === "signup" ? "สร้างบัญชีครอบครัว" : "เข้าสู่ระบบ"}</h2>
@@ -208,7 +217,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={isSubmitting || !isConfigured}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#347d59] py-3.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#286b4a] disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#7c3aed] py-3.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#6d28d9] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting
                 ? "กำลังดำเนินการ..."
@@ -227,7 +236,7 @@ export default function AuthPage() {
             type="button"
             onClick={signInWithGoogle}
             disabled={!isConfigured}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#e7ebe7] bg-white py-3.5 text-[11px] font-semibold text-[#3f4a42] transition hover:bg-[#f7f8f6] disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#e7e2ee] bg-white py-3.5 text-[11px] font-semibold text-[#3f4a42] transition hover:bg-[#f8f6ff] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg viewBox="0 0 48 48" className="size-4" aria-hidden="true">
               <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
@@ -275,7 +284,7 @@ function AuthField({
   return (
     <label className="block">
       <span className="mb-1.5 block text-[10px] font-semibold text-[#5f6b62]">{label}</span>
-      <span className="flex items-center gap-2.5 rounded-xl border border-[#e7ebe7] px-3.5 transition focus-within:border-[#8daf96]">
+      <span className="flex items-center gap-2.5 rounded-xl border border-[#e7e2ee] px-3.5 transition focus-within:border-[#a78bfa]">
         <Icon size={15} className="shrink-0 text-[#a0aaa2]" />
         <input
           value={value}

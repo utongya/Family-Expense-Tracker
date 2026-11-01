@@ -4,7 +4,7 @@ const categorySeeds = [
   ["food", "อาหาร และเครื่องดื่ม", "utensils"],
   ["shopping", "ช็อปปิ้ง", "shopping-bag"],
   ["home", "ค่างวดบ้าน", "house"],
-  ["sam", "ค่างวด SAM", "car"],
+  ["sam", "ค่างวด SAM", "landmark"],
   ["utilities", "สาธารณูปโภค", "lightbulb"],
   ["pets", "คชจ.ฮาโกะ/ฮาซิ", "paw-print"],
   ["household", "ของใช้เบ็ดเตล็ด", "package"],
