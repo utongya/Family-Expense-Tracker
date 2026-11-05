@@ -14,6 +14,7 @@ import {
   CreditCard,
   House,
   LayoutDashboard,
+  LogIn,
   Landmark,
   Lightbulb,
   LogOut,
@@ -31,6 +32,7 @@ import {
   Sparkles,
   Trash2,
   TrendingUp,
+  Users,
   Utensils,
   Wallet,
   X,
@@ -60,6 +62,9 @@ import type {
   DashboardData,
   DashboardSummary,
   Expense,
+  Invite,
+  Member,
+  Role,
 } from "@/lib/types";
 
 type DashboardProps = {
@@ -213,6 +218,30 @@ export function Dashboard({
     .filter((category) => category.total > 0)
     .sort((a, b) => b.total - a.total);
 
+  const spendingByMember = data.members
+    .map((member) => {
+      const rows = monthExpenses.filter((expense) => expense.userId === member.id);
+      return {
+        ...member,
+        total: rows.reduce((sum, expense) => sum + expense.amount, 0),
+        byCategory: Object.fromEntries(
+          data.categories.map((category) => [
+            category.id,
+            rows
+              .filter((expense) => expense.categoryId === category.id)
+              .reduce((sum, expense) => sum + expense.amount, 0),
+          ]),
+        ) as Record<string, number>,
+      };
+    })
+    .sort((a, b) => b.total - a.total);
+
+  const canEditExpense = () => isDemo || isAdmin;
+  const canDeleteExpense = (expense: Expense) =>
+    isDemo || isAdmin || expense.userId === userId;
+  const memberName = (id?: string) =>
+    data.members.find((member) => member.id === id)?.name ?? "-";
+
   const chartData = (() => {
     if (usingServerSummary) return initialSummary!.dailyTotals;
     const today = new Date();
@@ -278,7 +307,7 @@ export function Dashboard({
       amount,
       date: expenseForm.date,
       note: expenseForm.note.trim(),
-      userId,
+      userId: editingExpense?.userId ?? userId,
     };
 
     try {
@@ -465,6 +494,90 @@ export function Dashboard({
     }
   }
 
+  async function inviteMember(email: string, role: Role) {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized.includes("@")) {
+      setNotice("กรุณากรอกอีเมลให้ถูกต้อง");
+      return false;
+    }
+    if (data.invites.some((invite) => invite.email === normalized)) {
+      setNotice("อีเมลนี้ถูกเชิญแล้ว");
+      return false;
+    }
+    let invite: Invite = { id: crypto.randomUUID(), email: normalized, role };
+    try {
+      if (!isDemo) {
+        const { data: created, error } = await createClient()
+          .from("family_invites")
+          .insert({ family_id: familyId, email: normalized, role, invited_by: userId })
+          .select("id")
+          .single();
+        if (error) throw error;
+        invite = { ...invite, id: created.id };
+      }
+      setData((current) => ({ ...current, invites: [...current.invites, invite] }));
+      setNotice("เชิญสมาชิกแล้ว ให้สมาชิกสมัครบัญชีด้วยอีเมลนี้เพื่อเข้าร่วมครอบครัว");
+      return true;
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? `เชิญสมาชิกไม่สำเร็จ: ${error.message}`
+          : "เชิญสมาชิกไม่สำเร็จ กรุณาลองอีกครั้ง",
+      );
+      return false;
+    }
+  }
+
+  async function cancelInvite(invite: Invite) {
+    try {
+      if (!isDemo) {
+        const { error } = await createClient()
+          .from("family_invites")
+          .delete()
+          .eq("id", invite.id);
+        if (error) throw error;
+      }
+      setData((current) => ({
+        ...current,
+        invites: current.invites.filter((item) => item.id !== invite.id),
+      }));
+      setNotice("ยกเลิกคำเชิญแล้ว");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? `ยกเลิกคำเชิญไม่สำเร็จ: ${error.message}`
+          : "ยกเลิกคำเชิญไม่สำเร็จ",
+      );
+    }
+  }
+
+  async function changeMemberRole(member: Member, role: Role) {
+    try {
+      if (!isDemo) {
+        const { data: updated, error } = await createClient()
+          .from("users")
+          .update({ role })
+          .eq("id", member.id)
+          .select("id");
+        if (error) throw error;
+        if (!updated?.length) throw new Error("ไม่มีสิทธิ์เปลี่ยนบทบาทสมาชิกคนนี้");
+      }
+      setData((current) => ({
+        ...current,
+        members: current.members.map((item) =>
+          item.id === member.id ? { ...item, role } : item,
+        ),
+      }));
+      setNotice("เปลี่ยนบทบาทเรียบร้อยแล้ว");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? `เปลี่ยนบทบาทไม่สำเร็จ: ${error.message}`
+          : "เปลี่ยนบทบาทไม่สำเร็จ",
+      );
+    }
+  }
+
   async function signOut() {
     if (!isDemo) {
       const { error } = await createClient().auth.signOut();
@@ -561,7 +674,14 @@ export function Dashboard({
                 {isDemo ? "โหมดตัวอย่าง" : isAdmin ? "ผู้ดูแลครอบครัว" : "สมาชิกครอบครัว"}
               </p>
             </div>
-            {!isDemo && (
+            {isDemo ? (
+              <Link
+                href="/auth"
+                className="flex items-center gap-1.5 rounded-lg bg-[#7c3aed] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#6d28d9]"
+              >
+                <LogIn size={14} /> เข้าสู่ระบบ
+              </Link>
+            ) : (
               <button
                 aria-label="ออกจากระบบ"
                 title="ออกจากระบบ"
@@ -671,6 +791,11 @@ export function Dashboard({
               data={data}
               monthExpenses={monthExpenses}
               spendingByCategory={spendingByCategory}
+              spendingByMember={spendingByMember}
+              memberName={memberName}
+              canEdit={canEditExpense}
+              canDelete={canDeleteExpense}
+              onDeleteExpense={deleteExpense}
               chartData={chartData}
               totalMonth={totalMonth}
               totalBudget={totalBudget}
@@ -687,6 +812,9 @@ export function Dashboard({
             <ExpensesPage
               expenses={filteredExpenses}
               categories={data.categories}
+              memberName={memberName}
+              canEdit={canEditExpense}
+              canDelete={canDeleteExpense}
               searchTerm={searchTerm}
               onSearch={setSearchTerm}
               onAdd={openAddExpense}
@@ -717,6 +845,12 @@ export function Dashboard({
               userName={userName}
               isDemo={isDemo}
               isAdmin={isAdmin}
+              members={data.members}
+              invites={data.invites}
+              currentUserId={userId}
+              onInvite={inviteMember}
+              onCancelInvite={cancelInvite}
+              onChangeRole={changeMemberRole}
               onSignOut={signOut}
             />
           )}
@@ -751,6 +885,10 @@ type OverviewPageProps = {
   data: DashboardData;
   monthExpenses: Expense[];
   spendingByCategory: (Category & { total: number })[];
+  spendingByMember: (Member & { total: number; byCategory: Record<string, number> })[];
+  memberName: (id?: string) => string;
+  canEdit: () => boolean;
+  canDelete: (expense: Expense) => boolean;
   chartData: { date: string; label: string; total: number }[];
   totalMonth: number;
   totalBudget: number;
@@ -761,12 +899,18 @@ type OverviewPageProps = {
   onEditExpense: (expense: Expense) => void;
   onAddExpense: () => void;
   onOpenBudgets: () => void;
+  onDeleteExpense: (expense: Expense) => void;
 };
 
 function OverviewPage({
   data,
   monthExpenses,
   spendingByCategory,
+  spendingByMember,
+  memberName,
+  canEdit,
+  canDelete,
+  onDeleteExpense,
   chartData,
   totalMonth,
   totalBudget,
@@ -963,6 +1107,76 @@ function OverviewPage({
         </div>
       </section>
 
+      <section className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-[14px] font-bold">ค่าใช้จ่ายตามสมาชิก</h3>
+            <p className="mt-1 text-[11px] text-[#99a19b]">แยกตามหมวดหมู่ของแต่ละคน เดือนนี้</p>
+          </div>
+          <span className="flex items-center gap-1.5 rounded-lg bg-[#f5f7f4] px-2.5 py-1.5 text-[10px] text-[#758078]">
+            <Users size={12} /> {spendingByMember.length} คน
+          </span>
+        </div>
+        {spendingByMember.some((member) => member.total > 0) ? (
+          <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+            <div className="h-[220px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={spendingByMember.map((member) => ({
+                    name: member.name,
+                    ...member.byCategory,
+                  }))}
+                  margin={{ top: 8, right: 4, left: -20, bottom: 0 }}
+                >
+                  <CartesianGrid vertical={false} stroke="#eff1ee" strokeDasharray="3 4" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "#9aa39c" }} />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "#9aa39c" }} />
+                  <Tooltip
+                    formatter={(value, key) => [
+                      currency(Number(value)),
+                      data.categories.find((item) => item.id === key)?.name ?? String(key),
+                    ]}
+                    contentStyle={{ border: "1px solid #e8ece8", borderRadius: 12, fontSize: 11 }}
+                  />
+                  {data.categories.map((category, index) => (
+                    <Bar
+                      key={category.id}
+                      dataKey={category.id}
+                      stackId="member"
+                      fill={getCategoryColor(index)}
+                    />
+                  ))}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-3">
+              {spendingByMember.map((member) => {
+                const top = data.categories
+                  .map((category) => ({ category, total: member.byCategory[category.id] ?? 0 }))
+                  .filter((item) => item.total > 0)
+                  .sort((a, b) => b.total - a.total)
+                  .slice(0, 3);
+                return (
+                  <div key={member.id} className="rounded-xl bg-[#f8f6ff] p-3">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-semibold">{member.name}</span>
+                      <span className="font-bold">{currency(member.total)}</span>
+                    </div>
+                    <p className="mt-1 text-[10px] text-[#8a948d]">
+                      {top.length
+                        ? top.map((item) => `${item.category.name} ${currency(item.total)}`).join(" • ")
+                        : "ยังไม่มีรายจ่าย"}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <EmptyState icon={Users} title="ยังไม่มีรายจ่ายของสมาชิกในเดือนนี้" detail="เพิ่มรายการเพื่อดูค่าใช้จ่ายแยกตามสมาชิก" />
+        )}
+      </section>
+
       <section className="grid gap-5 xl:grid-cols-[1.65fr_1fr]">
         <div className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -977,7 +1191,11 @@ function OverviewPage({
           <ExpenseTable
             expenses={recentExpenses}
             categories={data.categories}
+            memberName={memberName}
+            canEdit={canEdit}
+            canDelete={canDelete}
             onEdit={onEditExpense}
+            onDelete={onDeleteExpense}
           />
         </div>
 
@@ -1069,11 +1287,17 @@ function SummaryCard({
 function ExpenseTable({
   expenses,
   categories,
+  memberName,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   expenses: Expense[];
   categories: Category[];
+  memberName: (id?: string) => string;
+  canEdit: () => boolean;
+  canDelete: (expense: Expense) => boolean;
   onEdit: (expense: Expense) => void;
   onDelete?: (expense: Expense) => void;
 }) {
@@ -1083,11 +1307,12 @@ function ExpenseTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[470px] border-collapse text-left">
+      <table className="w-full min-w-[540px] border-collapse text-left">
         <thead>
           <tr className="border-b border-[#eff1ee] text-[9px] font-medium text-[#a0a8a2]">
             <th className="pb-3 font-medium">รายการ</th>
             <th className="pb-3 font-medium">หมวดหมู่</th>
+            <th className="pb-3 font-medium">สมาชิก</th>
             <th className="pb-3 font-medium">วันที่</th>
             <th className="pb-3 text-right font-medium">จำนวนเงิน</th>
             <th className="w-8 pb-3" />
@@ -1109,19 +1334,22 @@ function ExpenseTable({
                   </div>
                 </td>
                 <td className="py-3 pr-3 text-[10px] text-[#8a948d]">{category?.name ?? "ไม่ระบุ"}</td>
+                <td className="py-3 pr-3 text-[10px] text-[#8a948d]">{memberName(expense.userId)}</td>
                 <td className="py-3 pr-3 text-[10px] text-[#8a948d]">{shortDate(expense.date)}</td>
                 <td className="py-3 text-right text-[10px] font-semibold">{currency(expense.amount)}</td>
                 <td className="py-3 pl-2">
                   <div className="flex items-center justify-end gap-1 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
-                    <button
-                      aria-label="แก้ไขรายการ"
-                      title="แก้ไข"
-                      className="rounded-md p-1 text-[#929c95] hover:bg-[#f2f5f2] hover:text-[#3e7958]"
-                      onClick={() => onEdit(expense)}
-                    >
-                      <Pencil size={13} />
-                    </button>
-                    {onDelete && (
+                    {canEdit() && (
+                      <button
+                        aria-label="แก้ไขรายการ"
+                        title="แก้ไข"
+                        className="rounded-md p-1 text-[#929c95] hover:bg-[#f2f5f2] hover:text-[#3e7958]"
+                        onClick={() => onEdit(expense)}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                    {onDelete && canDelete(expense) && (
                       <button
                         aria-label="ลบรายการ"
                         title="ลบ"
@@ -1145,6 +1373,9 @@ function ExpenseTable({
 function ExpensesPage({
   expenses,
   categories,
+  memberName,
+  canEdit,
+  canDelete,
   searchTerm,
   onSearch,
   onAdd,
@@ -1153,6 +1384,9 @@ function ExpensesPage({
 }: {
   expenses: Expense[];
   categories: Category[];
+  memberName: (id?: string) => string;
+  canEdit: () => boolean;
+  canDelete: (expense: Expense) => boolean;
   searchTerm: string;
   onSearch: (value: string) => void;
   onAdd: () => void;
@@ -1192,7 +1426,7 @@ function ExpensesPage({
             />
           </label>
         </div>
-        <ExpenseTable expenses={expenses} categories={categories} onEdit={onEdit} onDelete={onDelete} />
+        <ExpenseTable expenses={expenses} categories={categories} memberName={memberName} canEdit={canEdit} canDelete={canDelete} onEdit={onEdit} onDelete={onDelete} />
       </div>
     </section>
   );
@@ -1443,18 +1677,112 @@ function SettingsPage({
   userName,
   isDemo,
   isAdmin,
+  members,
+  invites,
+  currentUserId,
+  onInvite,
+  onCancelInvite,
+  onChangeRole,
   onSignOut,
 }: {
   userName: string;
   isDemo: boolean;
   isAdmin: boolean;
+  members: Member[];
+  invites: Invite[];
+  currentUserId?: string;
+  onInvite: (email: string, role: Role) => Promise<boolean>;
+  onCancelInvite: (invite: Invite) => void;
+  onChangeRole: (member: Member, role: Role) => void;
   onSignOut: () => void;
 }) {
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<Role>("member");
+  const canManage = isAdmin || isDemo;
+  const roleLabel = (role: Role) => (role === "admin" ? "ผู้ดูแล" : "สมาชิก");
+
+  async function submitInvite(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (await onInvite(inviteEmail, inviteRole)) setInviteEmail("");
+  }
+
   return (
     <section className="space-y-5">
       <div>
         <p className="text-[11px] text-[#98a29b]">จัดการบัญชีและข้อมูลของครอบครัว</p>
         <h2 className="mt-1.5 text-[21px] font-bold">ตั้งค่าบัญชี</h2>
+      </div>
+      <div className="max-w-3xl rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-7">
+        <div className="mb-3 flex items-center gap-2">
+          <Users size={16} className="text-[#7c3aed]" />
+          <h3 className="text-[14px] font-bold">สมาชิกครอบครัว</h3>
+        </div>
+        <p className="mb-4 text-[10px] leading-5 text-[#89938c]">
+          ผู้ดูแลจัดการหมวดหมู่ งบประมาณ สมาชิก และแก้ไข/ลบรายการได้ทุกคน ส่วนสมาชิกเพิ่มและลบได้เฉพาะรายการของตัวเอง
+        </p>
+        <ul className="divide-y divide-[#f2f3f1]">
+          {members.map((member) => (
+            <li key={member.id} className="flex items-center justify-between gap-3 py-2.5">
+              <span className="text-[11px] font-medium">
+                {member.name}
+                {member.id === currentUserId && <span className="ml-1.5 text-[#9aa29c]">(คุณ)</span>}
+              </span>
+              {canManage && !isDemo && member.id !== currentUserId ? (
+                <select
+                  aria-label={`บทบาทของ ${member.name}`}
+                  value={member.role}
+                  onChange={(event) => onChangeRole(member, event.target.value as Role)}
+                  className="rounded-lg border border-[#e9ece8] bg-white px-2 py-1 text-[11px]"
+                >
+                  <option value="member">สมาชิก</option>
+                  <option value="admin">ผู้ดูแล</option>
+                </select>
+              ) : (
+                <span className="rounded-full bg-[#f3edff] px-2.5 py-0.5 text-[10px] text-[#6d28d9]">{roleLabel(member.role)}</span>
+              )}
+            </li>
+          ))}
+          {invites.map((invite) => (
+            <li key={invite.id} className="flex items-center justify-between gap-3 py-2.5">
+              <span className="min-w-0 truncate text-[11px] text-[#68746c]">
+                {invite.email} <span className="text-[#a0a8a2]">(รอการสมัคร • {roleLabel(invite.role)})</span>
+              </span>
+              {canManage && (
+                <button
+                  aria-label="ยกเลิกคำเชิญ"
+                  className="rounded-md p-1 text-[#929c95] hover:bg-[#fff2ef] hover:text-[#bc5c4d]"
+                  onClick={() => onCancelInvite(invite)}
+                >
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+        {canManage && (
+          <form onSubmit={submitInvite} className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <input
+              type="email"
+              required
+              value={inviteEmail}
+              onChange={(event) => setInviteEmail(event.target.value)}
+              placeholder="อีเมลของสมาชิกที่ต้องการเชิญ"
+              className="min-w-0 flex-1 rounded-xl border border-[#e9ece8] px-3 py-2 text-[11px] outline-none"
+            />
+            <select
+              aria-label="บทบาท"
+              value={inviteRole}
+              onChange={(event) => setInviteRole(event.target.value as Role)}
+              className="rounded-xl border border-[#e9ece8] bg-white px-3 py-2 text-[11px]"
+            >
+              <option value="member">สมาชิก</option>
+              <option value="admin">ผู้ดูแล</option>
+            </select>
+            <button className="rounded-xl bg-[#7c3aed] px-4 py-2 text-[11px] font-semibold text-white hover:bg-[#6d28d9]">
+              เชิญสมาชิก
+            </button>
+          </form>
+        )}
       </div>
       <div className="max-w-3xl rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-7">
         <div className="flex items-center gap-4 border-b border-[#eff1ee] pb-5">

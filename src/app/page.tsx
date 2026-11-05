@@ -106,6 +106,8 @@ async function DashboardContent() {
     { data: categories, error: categoryError },
     { data: budgets, error: budgetError },
     { data: expenses, error: expenseError },
+    { data: members, error: memberError },
+    { data: invites },
   ] = await Promise.all([
     supabase.from("categories").select("id, name, icon").order("created_at"),
     supabase
@@ -118,10 +120,22 @@ async function DashboardContent() {
       .gte("expense_date", dataStart)
       .order("expense_date", { ascending: false })
       .limit(500),
+    supabase.from("users").select("id, display_name, role").order("created_at"),
+    supabase.from("family_invites").select("id, email, role").order("created_at"),
   ]);
 
-  const queryError = categoryError ?? budgetError ?? expenseError;
+  const queryError = categoryError ?? budgetError ?? expenseError ?? memberError;
   const initialData: DashboardData = {
+    members: (members ?? []).map((member) => ({
+      id: member.id,
+      name: member.display_name,
+      role: member.role === "admin" ? "admin" : "member",
+    })),
+    invites: (invites ?? []).map((invite) => ({
+      id: invite.id,
+      email: invite.email,
+      role: invite.role === "admin" ? "admin" : "member",
+    })),
     categories: (categories ?? []).map((category) => ({
       id: category.id,
       name: category.name,
@@ -189,6 +203,8 @@ async function DashboardContent() {
 }
 
 const emptyData: DashboardData = {
+  members: [],
+  invites: [],
   categories: [],
   budgets: [],
   expenses: [],

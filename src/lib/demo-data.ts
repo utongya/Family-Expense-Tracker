@@ -25,7 +25,15 @@ export function createDemoData(): DashboardData {
     return date.toISOString().slice(0, 10);
   };
 
+  const memberIds = ["demo-dad", "demo-mom", "demo-kid"];
+
   return {
+    members: [
+      { id: "demo-dad", name: "พ่อ", role: "admin" },
+      { id: "demo-mom", name: "แม่", role: "member" },
+      { id: "demo-kid", name: "ลูก", role: "member" },
+    ],
+    invites: [],
     categories,
     budgets: [
       { id: "budget-food", categoryId: "food", amount: 12000 },
@@ -57,6 +65,9 @@ export function createDemoData(): DashboardData {
       { id: "demo-16", categoryId: "utilities", amount: 690, date: dateAt(23), note: "ค่าน้ำประปา" },
       { id: "demo-17", categoryId: "shopping", amount: 850, date: dateAt(26), note: "ของใช้ส่วนตัว" },
       { id: "demo-18", categoryId: "food", amount: 510, date: dateAt(28), note: "ตลาดสด" },
-    ],
+    ].map((expense, index) => ({
+      ...expense,
+      userId: memberIds[index % memberIds.length],
+    })),
   };
 }

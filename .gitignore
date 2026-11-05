@@ -43,3 +43,5 @@ next-env.d.ts
 # Google OAuth credentials
 google o-auth client*.json
 client_secret*.json
+.vercel
+.env*

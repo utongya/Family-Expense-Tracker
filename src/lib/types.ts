@@ -19,7 +19,23 @@ export type Budget = {
   amount: number;
 };
 
+export type Role = "admin" | "member";
+
+export type Member = {
+  id: string;
+  name: string;
+  role: Role;
+};
+
+export type Invite = {
+  id: string;
+  email: string;
+  role: Role;
+};
+
 export type DashboardData = {
+  members: Member[];
+  invites: Invite[];
   categories: Category[];
   budgets: Budget[];
   expenses: Expense[];

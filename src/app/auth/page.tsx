@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, House, LockKeyhole, Mail, Sparkles, UserRound } from "lucide-react";
+import { ArrowLeft, House, LockKeyhole, LogIn, Mail, Sparkles, UserPlus, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -152,8 +152,9 @@ export default function AuthPage() {
               setMode(mode === "signup" ? "login" : "signup");
               setMessage("");
             }}
-            className="ml-2 text-[10px] font-semibold text-[#4b805f] hover:underline"
+            className="ml-2 flex items-center gap-1.5 rounded-lg bg-[#7c3aed] px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm hover:bg-[#6d28d9]"
           >
+            {mode === "signup" ? <LogIn size={14} /> : <UserPlus size={14} />}
             {mode === "signup" ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
           </button>
         </div>
