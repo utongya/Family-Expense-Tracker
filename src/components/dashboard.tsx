@@ -507,16 +507,19 @@ export function Dashboard({
     let invite: Invite = { id: crypto.randomUUID(), email: normalized, role };
     try {
       if (!isDemo) {
-        const { data: created, error } = await createClient()
-          .from("family_invites")
-          .insert({ family_id: familyId, email: normalized, role, invited_by: userId })
-          .select("id")
-          .single();
-        if (error) throw error;
-        invite = { ...invite, id: created.id };
+        const response = await fetch("/api/invite", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: normalized, role }),
+        });
+        const result = (await response.json()) as { id?: string; error?: string };
+        if (!response.ok || !result.id) {
+          throw new Error(result.error ?? "ส่งคำเชิญไม่สำเร็จ");
+        }
+        invite = { ...invite, id: result.id };
       }
       setData((current) => ({ ...current, invites: [...current.invites, invite] }));
-      setNotice("เชิญสมาชิกแล้ว ให้สมาชิกสมัครบัญชีด้วยอีเมลนี้เพื่อเข้าร่วมครอบครัว");
+      setNotice("ส่งอีเมลเชิญแล้ว สมาชิกต้องกดลิงก์ในอีเมลเพื่อตั้งรหัสผ่านและเข้าร่วมครอบครัว");
       return true;
     } catch (error) {
       setNotice(
