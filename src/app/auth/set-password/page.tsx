@@ -2,24 +2,47 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SetPasswordPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [linkError, setLinkError] = useState("");
   const [saving, setSaving] = useState(false);
+  // The URL hash is cleared once Supabase consumes it, so capture it once.
+  const linkState = useRef<{ hasToken: boolean; error: string } | null>(null);
 
   useEffect(() => {
+    if (!linkState.current) {
+      const hash = new URLSearchParams(window.location.hash.slice(1));
+      const search = new URLSearchParams(window.location.search);
+      linkState.current = {
+        hasToken: hash.has("access_token") || search.has("code"),
+        error: hash.get("error_description") ?? search.get("error_description") ?? "",
+      };
+    }
+    const { hasToken, error } = linkState.current;
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) setReady(true);
-    });
+
+    // Only trust a session that came from the invite link, never one already
+    // signed in on this browser (e.g. the admin), or we would change that password.
+    if (!hasToken) {
+      setLinkError(error || "ลิงก์เชิญไม่ถูกต้อง หมดอายุ หรือถูกใช้ไปแล้ว กรุณาให้ผู้ดูแลส่งคำเชิญใหม่");
+      return;
+    }
+    const accept = (session: { user: { email?: string } } | null) => {
+      if (!session) return;
+      setEmail(session.user.email ?? "");
+      setReady(true);
+    };
+    supabase.auth.getSession().then(({ data }) => accept(data.session));
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) =>
+      accept(session),
+    );
     return () => listener.subscription.unsubscribe();
   }, []);
 
@@ -48,6 +71,9 @@ export default function SetPasswordPage() {
         <h1 className="text-[22px] font-bold">ตั้งรหัสผ่านเพื่อเข้าร่วมครอบครัว</h1>
         {ready ? (
           <form onSubmit={submit} className="mt-5 space-y-3">
+            <p className="text-[11px] text-[#89938c]">
+              บัญชี: <span className="font-semibold text-[#4d5850]">{email}</span>
+            </p>
             <input
               type="password"
               required
@@ -63,6 +89,11 @@ export default function SetPasswordPage() {
               {saving ? "กำลังบันทึก..." : "ยืนยันและเข้าร่วม"}
             </button>
           </form>
+        ) : linkError ? (
+          <p className="mt-4 text-[12px] text-[#bc5c4d]">
+            {linkError}{" "}
+            <Link href="/auth" className="font-semibold text-[#7c3aed]">กลับไปหน้าเข้าสู่ระบบ</Link>
+          </p>
         ) : (
           <p className="mt-4 text-[12px] text-[#89938c]">
             กำลังตรวจสอบลิงก์เชิญ... หากไม่สำเร็จ ลิงก์อาจหมดอายุ{" "}
