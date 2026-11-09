@@ -3,6 +3,7 @@ import { createDemoData } from "@/lib/demo-data";
 import type { DashboardData, DashboardSummary } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
 import { connection } from "next/server";
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
 import { Suspense } from "react";
 
 function hasSupabaseConfig() {
@@ -45,6 +46,7 @@ async function DashboardContent() {
   if (!hasSupabaseConfig()) {
     return (
       <Dashboard
+        key="demo"
         initialData={demoData}
         isDemo
         userName="ครอบครัวสุขใจ"
@@ -55,11 +57,26 @@ async function DashboardContent() {
   const supabase = await createClient();
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
+
+  if (authError && !isAuthSessionMissingError(authError)) {
+    console.error("Failed to verify dashboard session:", authError.message);
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#f8f6ff] p-5">
+        <div role="alert" className="max-w-md rounded-2xl border border-[#e9ece8] bg-white p-6 text-[12px]">
+          <h1 className="text-[16px] font-bold">ตรวจสอบการเข้าสู่ระบบไม่สำเร็จ</h1>
+          <p className="mt-2 text-[#89938c]">กรุณาตรวจสอบการเชื่อมต่อแล้วโหลดหน้าใหม่ หรือเข้าสู่ระบบอีกครั้ง</p>
+          <a href="/auth" className="mt-4 inline-block font-semibold text-[#7c3aed]">ไปหน้าเข้าสู่ระบบ</a>
+        </div>
+      </main>
+    );
+  }
 
   if (!user) {
     return (
       <Dashboard
+        key="demo"
         initialData={demoData}
         isDemo
         userName="ครอบครัวสุขใจ"
@@ -76,6 +93,7 @@ async function DashboardContent() {
   if (profileError || !profile) {
     return (
       <Dashboard
+        key={user.id}
         initialData={emptyData}
         isDemo={false}
         userName={user.email ?? "สมาชิก"}
@@ -190,6 +208,7 @@ async function DashboardContent() {
 
   return (
     <Dashboard
+      key={user.id}
       initialData={initialData}
       initialSummary={initialSummary}
       isDemo={false}

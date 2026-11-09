@@ -2,10 +2,10 @@
 
 import { ArrowLeft, House, LockKeyhole, LogIn, Mail, Sparkles, UserPlus, UserRound } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { createPasswordClient } from "@/lib/supabase/password-client";
+import { navigateAfterAuth } from "@/lib/supabase/navigate-after-auth";
 
 const isConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -13,7 +13,6 @@ const isConfigured = Boolean(
 );
 
 export default function AuthPage() {
-  const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [displayName, setDisplayName] = useState("");
   const [familyName, setFamilyName] = useState("");
@@ -74,16 +73,15 @@ export default function AuthPage() {
         });
         if (error) throw error;
         if (data.session) {
-          router.push("/");
-          router.refresh();
+          navigateAfterAuth();
         } else {
           setMessage("สมัครสมาชิกสำเร็จแล้ว กรุณาตรวจสอบอีเมลเพื่อยืนยันบัญชี");
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.push("/");
-        router.refresh();
+        if (!data.session) throw new Error("เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง");
+        navigateAfterAuth();
       }
     } catch (error) {
       setMessage(

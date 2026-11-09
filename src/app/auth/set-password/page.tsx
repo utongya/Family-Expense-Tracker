@@ -1,17 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { createPasswordClient } from "@/lib/supabase/password-client";
 import { parsePasswordLink, verifyPasswordLink } from "@/lib/supabase/password-link";
+import { navigateAfterAuth } from "@/lib/supabase/navigate-after-auth";
 
 type VerifiedLink = { client: SupabaseClient; email: string };
 
 export default function SetPasswordPage() {
-  const router = useRouter();
   const verification = useRef<Promise<VerifiedLink> | null>(null);
   const [verified, setVerified] = useState<VerifiedLink | null>(null);
   const [password, setPassword] = useState("");
@@ -69,8 +68,7 @@ export default function SetPasswordPage() {
       if (result.error || !result.data.session) {
         throw new Error("บันทึกรหัสผ่านแล้ว แต่เข้าสู่ระบบอัตโนมัติไม่สำเร็จ กรุณาเข้าสู่ระบบด้วยรหัสผ่านใหม่");
       }
-      router.push("/");
-      router.refresh();
+      navigateAfterAuth();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "บันทึกรหัสผ่านไม่สำเร็จ กรุณาลองอีกครั้ง");
       setSaving(false);
