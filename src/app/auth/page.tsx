@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { createPasswordClient } from "@/lib/supabase/password-client";
 
 const isConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -19,6 +20,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -29,6 +31,24 @@ export default function AuthPage() {
     }
   }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function recoverPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    setIsSubmitting(true);
+    try {
+      const { error } = await createPasswordClient().auth.resetPasswordForEmail(
+        email.trim(),
+        { redirectTo: `${window.location.origin}/auth/set-password` },
+      );
+      if (error) throw error;
+      setMessage("หากอีเมลนี้มีบัญชีอยู่ ระบบจะส่งลิงก์ตั้งรหัสผ่านไปให้ กรุณาตรวจสอบอีเมลและโฟลเดอร์สแปม");
+    } catch (error) {
+      setMessage(error instanceof Error ? `ส่งคำขอไม่สำเร็จ: ${error.message}` : "ส่งคำขอไม่สำเร็จ กรุณาลองอีกครั้ง");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -150,6 +170,7 @@ export default function AuthPage() {
           <button
             onClick={() => {
               setMode(mode === "signup" ? "login" : "signup");
+              setRecovering(false);
               setMessage("");
             }}
             className="ml-2 flex items-center gap-1.5 rounded-lg bg-[#7c3aed] px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm hover:bg-[#6d28d9]"
@@ -163,13 +184,26 @@ export default function AuthPage() {
             <span className="flex size-11 items-center justify-center rounded-[15px] bg-[#f1eaff] text-[#7c3aed]"><House size={22} /></span>
           </div>
           <p className="text-[11px] font-medium text-[#84a08a]">{mode === "signup" ? "เริ่มต้นสร้างพื้นที่ของครอบครัว" : "ยินดีต้อนรับกลับมา"}</p>
-          <h2 className="mt-2 text-[25px] font-bold tracking-tight">{mode === "signup" ? "สร้างบัญชีครอบครัว" : "เข้าสู่ระบบ"}</h2>
+          <h2 className="mt-2 text-[25px] font-bold tracking-tight">{recovering ? "ตั้งรหัสผ่านใหม่" : mode === "signup" ? "สร้างบัญชีครอบครัว" : "เข้าสู่ระบบ"}</h2>
           <p className="mt-2 text-[11px] leading-5 text-[#939d96]">
-            {mode === "signup"
+            {recovering ? "กรอกอีเมลเพื่อรับลิงก์ตั้งรหัสผ่านใหม่" : mode === "signup"
               ? "เริ่มบันทึกและวางแผนค่าใช้จ่ายไปด้วยกัน"
               : "ลงชื่อเข้าใช้เพื่อดูข้อมูลของครอบครัว"}
           </p>
 
+          {recovering ? (
+            <form onSubmit={recoverPassword} className="mt-7 space-y-4">
+              <AuthField label="อีเมล" icon={Mail} value={email} onChange={setEmail}
+                placeholder="name@example.com" type="email" required />
+              {message && <p role="status" className="rounded-xl border border-[#e8e9dc] bg-[#faf9f0] px-3 py-2.5 text-[10px] leading-5 text-[#796c3f]">{message}</p>}
+              <button type="submit" disabled={isSubmitting || !isConfigured} className="w-full rounded-xl bg-[#7c3aed] py-3.5 text-[11px] font-semibold text-white disabled:opacity-60">
+                {isSubmitting ? "กำลังส่ง..." : "ส่งลิงก์ตั้งรหัสผ่าน"}
+              </button>
+              <button type="button" onClick={() => { setRecovering(false); setMessage(""); }}
+                className="w-full text-[11px] font-semibold text-[#7c3aed]">กลับไปเข้าสู่ระบบ</button>
+            </form>
+          ) : (
+          <>
           <form onSubmit={submit} className="mt-7 space-y-4">
             {mode === "signup" && (
               <>
@@ -210,6 +244,12 @@ export default function AuthPage() {
               minLength={6}
               required
             />
+            {mode === "login" && (
+              <button type="button" onClick={() => { setRecovering(true); setMessage(""); }}
+                className="block text-[11px] font-semibold text-[#7c3aed] hover:underline">
+                ลืมรหัสผ่านหรือตั้งรหัสผ่านครั้งแรก?
+              </button>
+            )}
             {message && (
               <p role="status" className="rounded-xl border border-[#e8e9dc] bg-[#faf9f0] px-3 py-2.5 text-[10px] leading-5 text-[#796c3f]">
                 {message}
@@ -247,6 +287,8 @@ export default function AuthPage() {
             </svg>
             {mode === "signup" ? "สมัครด้วย Google" : "เข้าสู่ระบบด้วย Google"}
           </button>
+          </>
+          )}
 
           {!isConfigured && (
             <p className="mt-4 text-center text-[10px] leading-5 text-[#a07854]">
