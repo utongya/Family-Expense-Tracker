@@ -1180,8 +1180,8 @@ function OverviewPage({
         )}
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.65fr_1fr]">
-        <div className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
+      <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+        <div className="min-w-0 rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <h3 className="text-[14px] font-bold">รายการล่าสุด</h3>
@@ -1202,7 +1202,7 @@ function OverviewPage({
           />
         </div>
 
-        <div className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
+        <div className="min-w-0 rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
           <div className="mb-5 flex items-start justify-between">
             <div>
               <h3 className="text-[14px] font-bold">ติดตามงบประมาณ</h3>
