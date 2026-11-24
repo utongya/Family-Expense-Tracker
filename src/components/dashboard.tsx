@@ -219,6 +219,7 @@ export function Dashboard({
     .sort((a, b) => b.total - a.total);
 
   const spendingByMember = data.members
+    .filter((member) => !member.removedAt)
     .map((member) => {
       const rows = monthExpenses.filter((expense) => expense.userId === member.id);
       return {
@@ -239,8 +240,11 @@ export function Dashboard({
   const canEditExpense = () => isDemo || isAdmin;
   const canDeleteExpense = (expense: Expense) =>
     isDemo || isAdmin || expense.userId === userId;
-  const memberName = (id?: string) =>
-    data.members.find((member) => member.id === id)?.name ?? "-";
+  const memberName = (id?: string) => {
+    const member = data.members.find((item) => item.id === id);
+    if (!member) return "อดีตสมาชิก";
+    return member.removedAt ? `${member.name} (อดีตสมาชิก)` : member.name;
+  };
 
   const query = searchTerm.trim().toLocaleLowerCase("th");
   const filteredExpenses = [...data.expenses]
@@ -452,6 +456,7 @@ export function Dashboard({
       setCategoryBeingEdited(null);
       return;
     }
+
     try {
       if (!isDemo) {
         const { error } = await createClient()
@@ -473,6 +478,63 @@ export function Dashboard({
         error instanceof Error
           ? `แก้ไขหมวดหมู่ไม่สำเร็จ: ${error.message}`
           : "แก้ไขหมวดหมู่ไม่สำเร็จ กรุณาลองอีกครั้ง",
+      );
+    }
+  }
+
+  async function deleteCategory(category: Category) {
+    if (!isDemo && !isAdmin) {
+      setNotice("เฉพาะผู้ดูแลครอบครัวเท่านั้นที่ลบหมวดหมู่ได้");
+      return;
+    }
+    let expenseCount = data.expenses.filter(
+      (expense) => expense.categoryId === category.id,
+    ).length;
+    if (!isDemo) {
+      const { count, error } = await createClient()
+        .from("expenses")
+        .select("id", { count: "exact", head: true })
+        .eq("category_id", category.id);
+      if (error) {
+        setNotice(`ตรวจสอบรายการในหมวดหมู่ไม่สำเร็จ: ${error.message}`);
+        return;
+      }
+      expenseCount = count ?? 0;
+    }
+    if (expenseCount > 0) {
+      setNotice(
+        `ลบหมวดหมู่ “${category.name}” ไม่ได้ เพราะมีรายการใช้จ่าย ${expenseCount} รายการ กรุณาย้ายหรือลบรายการก่อน`,
+      );
+      return;
+    }
+    if (
+      !window.confirm(
+        `ต้องการลบหมวดหมู่ “${category.name}” และงบประมาณที่เกี่ยวข้องใช่ไหม?`,
+      )
+    ) {
+      return;
+    }
+    try {
+      if (!isDemo) {
+        const { error } = await createClient()
+          .from("categories")
+          .delete()
+          .eq("id", category.id);
+        if (error) throw error;
+      }
+      setData((current) => ({
+        ...current,
+        categories: current.categories.filter((item) => item.id !== category.id),
+        budgets: current.budgets.filter(
+          (budget) => budget.categoryId !== category.id,
+        ),
+      }));
+      setNotice("ลบหมวดหมู่เรียบร้อยแล้ว");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? `ลบหมวดหมู่ไม่สำเร็จ: ${error.message}`
+          : "ลบหมวดหมู่ไม่สำเร็จ กรุณาลองอีกครั้ง",
       );
     }
   }
@@ -548,6 +610,7 @@ export function Dashboard({
         if (error) throw error;
         if (!updated?.length) throw new Error("ไม่มีสิทธิ์เปลี่ยนบทบาทสมาชิกคนนี้");
       }
+
       setData((current) => ({
         ...current,
         members: current.members.map((item) =>
@@ -560,6 +623,49 @@ export function Dashboard({
         error instanceof Error
           ? `เปลี่ยนบทบาทไม่สำเร็จ: ${error.message}`
           : "เปลี่ยนบทบาทไม่สำเร็จ",
+      );
+    }
+  }
+
+  async function removeMember(member: Member) {
+    if (
+      !window.confirm(
+        `ต้องการนำ ${member.name} ออกจากครอบครัวใช่ไหม?\n\nรายจ่ายเดิมจะถูกเก็บไว้ และแสดงเป็นของอดีตสมาชิก`,
+      )
+    ) {
+      return;
+    }
+    try {
+      let removedAt = new Date().toISOString();
+      if (!isDemo) {
+        const response = await fetch("/api/members/remove", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ memberId: member.id }),
+        });
+        const result = (await response.json()) as {
+          removedAt?: string;
+          error?: string;
+        };
+        if (!response.ok || !result.removedAt) {
+          throw new Error(result.error ?? "นำสมาชิกออกไม่สำเร็จ");
+        }
+        removedAt = result.removedAt;
+      }
+      setData((current) => ({
+        ...current,
+        members: current.members.map((item) =>
+          item.id === member.id ? { ...item, removedAt } : item,
+        ),
+      }));
+      setNotice(
+        `นำ ${member.name} ออกจากครอบครัวแล้ว รายจ่ายเดิมถูกเก็บไว้เรียบร้อย`,
+      );
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? `นำสมาชิกออกไม่สำเร็จ: ${error.message}`
+          : "นำสมาชิกออกไม่สำเร็จ กรุณาลองอีกครั้ง",
       );
     }
   }
@@ -820,6 +926,7 @@ export function Dashboard({
               setCategoryBeingEdited={setCategoryBeingEdited}
               setCategoryNameDraft={setCategoryNameDraft}
               onRenameCategory={renameCategory}
+              onDeleteCategory={deleteCategory}
               newCategory={newCategory}
               setNewCategory={setNewCategory}
               isAdmin={isAdmin || isDemo}
@@ -836,6 +943,9 @@ export function Dashboard({
               onInvite={inviteMember}
               onCancelInvite={cancelInvite}
               onChangeRole={changeMemberRole}
+              onRemoveMember={removeMember}
+              onOpenExpenses={() => navigateTo("expenses")}
+              onOpenBudgets={() => navigateTo("budgets")}
               onSignOut={signOut}
             />
           )}
@@ -1550,6 +1660,7 @@ function BudgetsPage({
   setCategoryBeingEdited,
   setCategoryNameDraft,
   onRenameCategory,
+  onDeleteCategory,
   newCategory,
   setNewCategory,
   isAdmin,
@@ -1565,6 +1676,7 @@ function BudgetsPage({
   setCategoryBeingEdited: (value: string | null) => void;
   setCategoryNameDraft: (value: string) => void;
   onRenameCategory: (category: Category) => void;
+  onDeleteCategory: (category: Category) => void;
   newCategory: string;
   setNewCategory: (value: string) => void;
   isAdmin: boolean;
@@ -1666,16 +1778,25 @@ function BudgetsPage({
                     <>
                       <span className="min-w-0 flex-1 truncate text-[13px] text-[#667269]">{category.name}</span>
                       {isAdmin && (
-                        <button
-                          onClick={() => {
-                            setCategoryBeingEdited(category.id);
-                            setCategoryNameDraft(category.name);
-                          }}
-                          aria-label={`แก้ไขหมวดหมู่ ${category.name}`}
-                          className="rounded-md p-1.5 text-[#95a098] hover:bg-[#f1f5f1] hover:text-[#477b59]"
-                        >
-                          <Pencil size={12} />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              setCategoryBeingEdited(category.id);
+                              setCategoryNameDraft(category.name);
+                            }}
+                            aria-label={`แก้ไขหมวดหมู่ ${category.name}`}
+                            className="rounded-md p-1.5 text-[#95a098] hover:bg-[#f1f5f1] hover:text-[#477b59]"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            onClick={() => onDeleteCategory(category)}
+                            aria-label={`ลบหมวดหมู่ ${category.name}`}
+                            className="rounded-md p-1.5 text-[#95a098] hover:bg-[#fff2ef] hover:text-[#bc5c4d]"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </>
                       )}
                     </>
                   )}
@@ -1789,6 +1910,9 @@ function SettingsPage({
   onInvite,
   onCancelInvite,
   onChangeRole,
+  onRemoveMember,
+  onOpenExpenses,
+  onOpenBudgets,
   onSignOut,
 }: {
   userName: string;
@@ -1800,12 +1924,16 @@ function SettingsPage({
   onInvite: (email: string, role: Role) => Promise<boolean>;
   onCancelInvite: (invite: Invite) => void;
   onChangeRole: (member: Member, role: Role) => void;
+  onRemoveMember: (member: Member) => void;
+  onOpenExpenses: () => void;
+  onOpenBudgets: () => void;
   onSignOut: () => void;
 }) {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("member");
   const canManage = isAdmin || isDemo;
   const roleLabel = (role: Role) => (role === "admin" ? "ผู้ดูแล" : "สมาชิก");
+  const activeMembers = members.filter((member) => !member.removedAt);
 
   async function submitInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1827,22 +1955,34 @@ function SettingsPage({
           ผู้ดูแลจัดการหมวดหมู่ งบประมาณ สมาชิก และแก้ไข/ลบรายการได้ทุกคน ส่วนสมาชิกเพิ่มและลบได้เฉพาะรายการของตัวเอง
         </p>
         <ul className="divide-y divide-[#f2f3f1]">
-          {members.map((member) => (
+          {activeMembers.map((member) => (
             <li key={member.id} className="flex items-center justify-between gap-3 py-2.5">
               <span className="text-[14px] font-medium">
                 {member.name}
                 {member.id === currentUserId && <span className="ml-1.5 text-[#9aa29c]">(คุณ)</span>}
               </span>
-              {canManage && !isDemo && member.id !== currentUserId ? (
-                <select
-                  aria-label={`บทบาทของ ${member.name}`}
-                  value={member.role}
-                  onChange={(event) => onChangeRole(member, event.target.value as Role)}
-                  className="rounded-lg border border-[#e9ece8] bg-white px-2 py-1 text-[14px]"
-                >
-                  <option value="member">สมาชิก</option>
-                  <option value="admin">ผู้ดูแล</option>
-                </select>
+              {canManage && member.id !== currentUserId ? (
+                <div className="flex items-center gap-1.5">
+                  {!isDemo && (
+                    <select
+                      aria-label={`บทบาทของ ${member.name}`}
+                      value={member.role}
+                      onChange={(event) => onChangeRole(member, event.target.value as Role)}
+                      className="rounded-lg border border-[#e9ece8] bg-white px-2 py-1 text-[14px]"
+                    >
+                      <option value="member">สมาชิก</option>
+                      <option value="admin">ผู้ดูแล</option>
+                    </select>
+                  )}
+                  <button
+                    aria-label={`นำ ${member.name} ออกจากครอบครัว`}
+                    title="นำสมาชิกออก"
+                    onClick={() => onRemoveMember(member)}
+                    className="rounded-lg p-1.5 text-[#9aa39d] hover:bg-[#fff2ef] hover:text-[#bc5c4d]"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               ) : (
                 <span className="rounded-full bg-[#f3edff] px-2.5 py-0.5 text-[13px] text-[#6d28d9]">{roleLabel(member.role)}</span>
               )}
@@ -1890,6 +2030,38 @@ function SettingsPage({
           </form>
         )}
       </div>
+      {canManage && (
+        <div className="max-w-3xl rounded-2xl border border-[#e5dff1] bg-[#fbfaff] p-5 sm:p-7">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-[18px] font-bold">เครื่องมือผู้ดูแล</h3>
+              <p className="mt-1 text-[13px] leading-5 text-[#89938c]">
+                แก้ไขและลบรายการใช้จ่าย จัดการหมวดหมู่ และตรวจสอบข้อมูลครอบครัวได้จากที่นี่
+              </p>
+            </div>
+            <span className="rounded-full bg-white px-3 py-1 text-[13px] font-semibold text-[#6d28d9]">
+              {activeMembers.length} สมาชิก
+            </span>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={onOpenExpenses}
+              className="flex items-center gap-2 rounded-xl border border-[#ddd4ef] bg-white px-3 py-2 text-[14px] font-semibold text-[#66537d] hover:bg-[#f6f1ff]"
+            >
+              <CreditCard size={15} /> จัดการรายการใช้จ่าย
+            </button>
+            <button
+              onClick={onOpenBudgets}
+              className="flex items-center gap-2 rounded-xl border border-[#ddd4ef] bg-white px-3 py-2 text-[14px] font-semibold text-[#66537d] hover:bg-[#f6f1ff]"
+            >
+              <SlidersHorizontal size={15} /> จัดการหมวดหมู่และงบ
+            </button>
+          </div>
+          <p className="mt-3 text-[12px] text-[#9a8eaa]">
+            การนำสมาชิกออกจะปิดการเข้าถึงบัญชี แต่เก็บชื่อและรายจ่ายเดิมไว้เพื่อให้รายงานย้อนหลังครบถ้วน
+          </p>
+        </div>
+      )}
       <div className="max-w-3xl rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-7">
         <div className="flex items-center gap-4 border-b border-[#eff1ee] pb-5">
           <span className="flex size-12 items-center justify-center rounded-2xl bg-[#efe7ff] text-[18px] font-bold text-[#6d28d9]">{userName.slice(0, 2)}</span>

@@ -25,6 +25,7 @@ export type Member = {
   id: string;
   name: string;
   role: Role;
+  removedAt?: string | null;
 };
 
 export type Invite = {

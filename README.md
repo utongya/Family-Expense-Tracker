@@ -12,6 +12,13 @@ A responsive, Thai-language family expense tracker built with Next.js App Router
 
 The dashboard opens in a clearly labeled demo mode when Supabase is not configured or when no user is signed in. Demo changes live only in browser memory. Signup creates a new family, assigns the first user the admin role, and seeds the default expense categories. Supabase email confirmation behavior depends on the project's Auth settings.
 
+## Admin data controls
+
+- Family admins can correct or delete any expense, manage budgets and categories, change member roles, and remove members from the **ตั้งค่า** page.
+- Removing a member closes that account's family access while preserving the profile name and its expense history as an “อดีตสมาชิก”. The member cannot be removed if the request comes from a non-admin or targets the signed-in admin.
+- Categories can only be deleted after all expenses using that category have been reassigned or removed. Deleting a category also removes its budgets.
+- Member removal uses the server-only `SUPABASE_SERVICE_ROLE_KEY` to disable the Supabase Auth account, so the key must be configured and the latest migration must be applied before using it in production.
+
 ## Invitations and password recovery
 
 - An admin can invite a new email from the family settings. Supabase creates the Auth user and the database trigger adds the profile to the family; the invitation row may already be gone before the member opens the email.

@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">บ้านอุ่นใจ maskable icon</title>
+  <desc id="description">A white home surrounding a warm pink heart, safely centered on purple</desc>
+  <defs>
+    <linearGradient id="background" x1="40" y1="24" x2="472" y2="496" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9b6cff"/>
+      <stop offset="1" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="heart" x1="211" y1="242" x2="303" y2="329" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffb3c7"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#background)"/>
+  <circle cx="442" cy="64" r="88" fill="#fff" opacity=".07"/>
+  <circle cx="52" cy="468" r="120" fill="#4c1d95" opacity=".14"/>
+  <g transform="translate(32 30) scale(.875)">
+    <path
+      d="M122 241.5 256 122l134 119.5v128a32 32 0 0 1-32 32H154a32 32 0 0 1-32-32v-128Z"
+      fill="#fff"
+      opacity=".96"
+    />
+    <path
+      d="M93 260 244 125a18 18 0 0 1 24 0l151 135"
+      fill="none"
+      stroke="#fff"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="42"
+    />
+    <path
+      d="M256 347s-67-38-67-82c0-25 19-45 43-45 11 0 20 5 24 13 5-8 14-13 25-13 24 0 43 20 43 45 0 44-68 82-68 82Z"
+      fill="url(#heart)"
+    />
+  </g>
+</svg>

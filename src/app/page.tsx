@@ -148,7 +148,10 @@ async function DashboardContent() {
       .gte("expense_date", dataStart)
       .order("expense_date", { ascending: false })
       .limit(500),
-    supabase.from("users").select("id, display_name, role").order("created_at"),
+    supabase
+      .from("users")
+      .select("id, display_name, role, removed_at")
+      .order("created_at"),
     supabase.from("family_invites").select("id, email, role").order("created_at"),
   ]);
 
@@ -158,6 +161,7 @@ async function DashboardContent() {
       id: member.id,
       name: member.display_name,
       role: member.role === "admin" ? "admin" : "member",
+      removedAt: member.removed_at,
     })),
     invites: (invites ?? []).map((invite) => ({
       id: invite.id,

@@ -9,6 +9,15 @@
 			"problemMatcher": [
 				"$tsc"
 			]
+		},
+		{
+			"label": "Restart Family Expense Tracker",
+			"type": "shell",
+			"command": "npm run dev",
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			]
 		}
 	]
 }
