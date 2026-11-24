@@ -242,23 +242,6 @@ export function Dashboard({
   const memberName = (id?: string) =>
     data.members.find((member) => member.id === id)?.name ?? "-";
 
-  const chartData = (() => {
-    if (usingServerSummary) return initialSummary!.dailyTotals;
-    const today = new Date();
-    return Array.from({ length: 30 }, (_, index) => {
-      const date = new Date(today);
-      date.setDate(today.getDate() - (29 - index));
-      const dateKey = localDateString(date);
-      return {
-        date: dateKey,
-        label: new Intl.DateTimeFormat("th-TH", { day: "numeric" }).format(date),
-        total: data.expenses
-          .filter((expense) => expense.date === dateKey)
-          .reduce((sum, expense) => sum + expense.amount, 0),
-      };
-    });
-  })();
-
   const query = searchTerm.trim().toLocaleLowerCase("th");
   const filteredExpenses = [...data.expenses]
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -613,8 +596,8 @@ export function Dashboard({
               <House size={21} strokeWidth={2.3} />
             </span>
             <span>
-              <span className="block text-[16px] font-bold tracking-tight">บ้านอุ่นใจ</span>
-              <span className="mt-0.5 block text-[10px] tracking-[0.14em] text-[#97a19a]">จัดการเงินครอบครัว</span>
+              <span className="block text-[20px] font-bold tracking-tight">บ้านอุ่นใจ</span>
+              <span className="mt-0.5 block text-[13px] tracking-[0.14em] text-[#97a19a]">จัดการเงินครอบครัว</span>
             </span>
           </Link>
           <button
@@ -626,7 +609,7 @@ export function Dashboard({
           </button>
         </div>
 
-        <p className="mb-3 px-3 text-[10px] font-semibold tracking-[0.16em] text-[#a3aaa5]">
+        <p className="mb-3 px-3 text-[13px] font-semibold tracking-[0.16em] text-[#a3aaa5]">
           เมนูหลัก
         </p>
         <nav className="space-y-1">
@@ -634,7 +617,7 @@ export function Dashboard({
             <button
               key={id}
               onClick={() => navigateTo(id)}
-              className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] font-medium transition ${
+              className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[16px] font-medium transition ${
                 activePage === id
                   ? "bg-[#f3edff] text-[#6d28d9]"
                   : "text-[#78827c] hover:bg-[#f8f6ff] hover:text-[#333a35]"
@@ -643,7 +626,7 @@ export function Dashboard({
               <Icon size={18} strokeWidth={1.9} />
               <span>{label}</span>
               {id === "expenses" && activePage === id && (
-                <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[10px] text-[#7d8a81]">
+                <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[13px] text-[#7d8a81]">
                   {data.expenses.length}
                 </span>
               )}
@@ -655,32 +638,32 @@ export function Dashboard({
           <div className="mb-4 rounded-2xl bg-[#f6f7f4] p-4">
             <div className="mb-3 flex items-center gap-2">
               <Sparkles size={15} className="text-[#d4a15d]" />
-              <p className="text-[12px] font-semibold">วางแผนไปด้วยกัน</p>
+              <p className="text-[15px] font-semibold">วางแผนไปด้วยกัน</p>
             </div>
-            <p className="text-[11px] leading-5 text-[#89928c]">
+            <p className="text-[14px] leading-5 text-[#89928c]">
               ดูแลทุกค่าใช้จ่าย เพื่อเป้าหมายของครอบครัว
             </p>
             <button
               onClick={() => navigateTo("budgets")}
-              className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#7c3aed]"
+              className="mt-3 flex items-center gap-1 text-[14px] font-semibold text-[#7c3aed]"
             >
               ดูงบประมาณ <ArrowRight size={13} />
             </button>
           </div>
           <div className="flex items-center gap-3 border-t border-[#eef0ed] px-1 pt-4">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#efe7ff] text-[11px] font-bold text-[#6d28d9]">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#efe7ff] text-[14px] font-bold text-[#6d28d9]">
               {avatarLetters}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-semibold">{userName}</p>
-              <p className="mt-0.5 text-[10px] text-[#9aa29c]">
+              <p className="truncate text-[15px] font-semibold">{userName}</p>
+              <p className="mt-0.5 text-[13px] text-[#9aa29c]">
                 {isDemo ? "โหมดตัวอย่าง" : isAdmin ? "ผู้ดูแลครอบครัว" : "สมาชิกครอบครัว"}
               </p>
             </div>
             {isDemo ? (
               <Link
                 href="/auth"
-                className="flex items-center gap-1.5 rounded-lg bg-[#7c3aed] px-3 py-2 text-[11px] font-semibold text-white hover:bg-[#6d28d9]"
+                className="flex items-center gap-1.5 rounded-lg bg-[#7c3aed] px-3 py-2 text-[14px] font-semibold text-white hover:bg-[#6d28d9]"
               >
                 <LogIn size={14} /> เข้าสู่ระบบ
               </Link>
@@ -717,14 +700,14 @@ export function Dashboard({
               <Menu size={21} />
             </button>
             <div>
-              <p className="text-[10px] font-medium tracking-[0.12em] text-[#a1aaa3]">
+              <p className="text-[13px] font-medium tracking-[0.12em] text-[#a1aaa3]">
                 {new Intl.DateTimeFormat("th-TH", { weekday: "long" }).format(new Date())} · บ้านของเรา
               </p>
-              <h1 className="mt-0.5 text-[15px] font-bold sm:text-[17px]">{pageTitle(activePage)}</h1>
+              <h1 className="mt-0.5 text-[19px] font-bold sm:text-[21px]">{pageTitle(activePage)}</h1>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden items-center gap-2 rounded-xl border border-[#ecefeb] px-3 py-2 text-[11px] text-[#7b867f] sm:flex">
+            <div className="hidden items-center gap-2 rounded-xl border border-[#ecefeb] px-3 py-2 text-[14px] text-[#7b867f] sm:flex">
               <CalendarDays size={14} />
               <span>{monthName}</span>
               <ChevronDown size={13} />
@@ -740,7 +723,7 @@ export function Dashboard({
             </button>
             <button
               onClick={openAddExpense}
-              className="flex items-center gap-2 rounded-xl bg-[#7c3aed] px-3 py-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#6d28d9] sm:px-4 sm:text-[12px]"
+              className="flex items-center gap-2 rounded-xl bg-[#7c3aed] px-3 py-2.5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#6d28d9] sm:px-4 sm:text-[15px]"
             >
               <Plus size={16} />
               <span className="hidden sm:inline">เพิ่มรายการ</span>
@@ -757,15 +740,15 @@ export function Dashboard({
                   <Sparkles size={16} />
                 </span>
                 <div>
-                  <p className="text-[12px] font-semibold text-[#495d44]">กำลังดูข้อมูลตัวอย่าง</p>
-                  <p className="mt-1 text-[11px] leading-5 text-[#788571]">
+                  <p className="text-[15px] font-semibold text-[#495d44]">กำลังดูข้อมูลตัวอย่าง</p>
+                  <p className="mt-1 text-[14px] leading-5 text-[#788571]">
                     รายการที่เพิ่มจะอยู่ในหน้านี้ชั่วคราว ตั้งค่า Supabase เพื่อเริ่มบันทึกข้อมูลจริงของครอบครัว
                   </p>
                 </div>
               </div>
               <Link
                 href="/auth"
-                className="ml-11 flex shrink-0 items-center gap-1 text-[11px] font-semibold text-[#7c3aed] hover:underline sm:ml-0"
+                className="ml-11 flex shrink-0 items-center gap-1 text-[14px] font-semibold text-[#7c3aed] hover:underline sm:ml-0"
               >
                 ตั้งค่าบัญชี <ArrowRight size={13} />
               </Link>
@@ -773,14 +756,14 @@ export function Dashboard({
           )}
 
           {dataError && (
-            <div role="alert" className="mb-5 rounded-xl border border-[#f0d1c8] bg-[#fff6f3] px-4 py-3 text-[12px] text-[#a64d3c]">
+            <div role="alert" className="mb-5 rounded-xl border border-[#f0d1c8] bg-[#fff6f3] px-4 py-3 text-[15px] text-[#a64d3c]">
               โหลดข้อมูลไม่สำเร็จ: {dataError}
             </div>
           )}
           {notice && (
             <div
               role="status"
-              className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-[#dfe9e0] bg-white px-4 py-3 text-[12px] text-[#52675a]"
+              className="mb-5 flex items-center justify-between gap-3 rounded-xl border border-[#dfe9e0] bg-white px-4 py-3 text-[15px] text-[#52675a]"
             >
               <span>{notice}</span>
               <button aria-label="ปิดข้อความ" onClick={() => setNotice("")}>
@@ -799,7 +782,6 @@ export function Dashboard({
               canEdit={canEditExpense}
               canDelete={canDeleteExpense}
               onDeleteExpense={deleteExpense}
-              chartData={chartData}
               totalMonth={totalMonth}
               totalBudget={totalBudget}
               remaining={remaining}
@@ -892,7 +874,6 @@ type OverviewPageProps = {
   memberName: (id?: string) => string;
   canEdit: () => boolean;
   canDelete: (expense: Expense) => boolean;
-  chartData: { date: string; label: string; total: number }[];
   totalMonth: number;
   totalBudget: number;
   remaining: number;
@@ -914,7 +895,6 @@ function OverviewPage({
   canEdit,
   canDelete,
   onDeleteExpense,
-  chartData,
   totalMonth,
   totalBudget,
   remaining,
@@ -925,7 +905,82 @@ function OverviewPage({
   onAddExpense,
   onOpenBudgets,
 }: OverviewPageProps) {
-  const maxDaily = Math.max(...chartData.map((item) => item.total), 1000);
+  const [chartRange, setChartRange] = useState("last30Days");
+  const [chartGrouping, setChartGrouping] = useState<"day" | "month">("day");
+  const today = new Date();
+  const selectedMonth =
+    chartRange === "last30Days" ? null : new Date(`${chartRange}-01T00:00:00`);
+  const monthOptions = Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(today.getFullYear(), today.getMonth() - index, 1);
+    const value = localDateString(date).slice(0, 7);
+    return {
+      value,
+      label: new Intl.DateTimeFormat("th-TH", {
+        month: "long",
+        year: "numeric",
+      }).format(date),
+    };
+  });
+  const chartStart = selectedMonth
+    ? new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1)
+    : new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
+  const chartEnd =
+    selectedMonth &&
+    (selectedMonth.getFullYear() !== today.getFullYear() ||
+      selectedMonth.getMonth() !== today.getMonth())
+      ? new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0)
+      : today;
+  const chartStartKey = localDateString(chartStart);
+  const chartEndKey = localDateString(chartEnd);
+  const rangeExpenses = data.expenses.filter(
+    (expense) => expense.date >= chartStartKey && expense.date <= chartEndKey,
+  );
+  const chartData =
+    chartGrouping === "day"
+      ? Array.from(
+          {
+            length:
+              Math.round(
+                (new Date(`${chartEndKey}T00:00:00`).getTime() -
+                  new Date(`${chartStartKey}T00:00:00`).getTime()) /
+                  86_400_000,
+              ) + 1,
+          },
+          (_, index) => {
+            const date = new Date(chartStart);
+            date.setDate(chartStart.getDate() + index);
+            const dateKey = localDateString(date);
+            return {
+              date: dateKey,
+              label: new Intl.DateTimeFormat("th-TH", { day: "numeric" }).format(date),
+              total: rangeExpenses
+                .filter((expense) => expense.date === dateKey)
+                .reduce((sum, expense) => sum + expense.amount, 0),
+            };
+          },
+        )
+      : Object.entries(
+          rangeExpenses.reduce<Record<string, number>>((totals, expense) => {
+            const monthKey = expense.date.slice(0, 7);
+            totals[monthKey] = (totals[monthKey] ?? 0) + expense.amount;
+            return totals;
+          }, {}),
+        ).map(([monthKey, total]) => {
+          const date = new Date(`${monthKey}-01T00:00:00`);
+          return {
+            date: `${monthKey}-01`,
+            label: new Intl.DateTimeFormat("th-TH", {
+              month: "short",
+              year: "2-digit",
+            }).format(date),
+            total,
+          };
+        });
+  const maxSpending = Math.max(...chartData.map((item) => item.total), 1000);
+  const chartRangeLabel =
+    monthOptions.find((option) => option.value === chartRange)?.label ??
+    "30 วันล่าสุด";
+  const chartGroupingLabel = chartGrouping === "day" ? "รายวัน" : "รายเดือน";
   const recentExpenses = [...monthExpenses]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5);
@@ -934,13 +989,13 @@ function OverviewPage({
     <div className="space-y-6">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <p className="text-[11px] font-medium text-[#98a29b]">ยินดีต้อนรับกลับบ้าน 👋</p>
-          <h2 className="mt-1.5 text-[23px] font-bold tracking-tight sm:text-[27px]">จัดการเงินบ้านเราให้อุ่นใจ</h2>
-          <p className="mt-1.5 text-[12px] text-[#89938c]">ทุกเป้าหมายเริ่มต้นจากการวางแผนเล็ก ๆ ในทุกวัน</p>
+          <p className="text-[14px] font-medium text-[#98a29b]">ยินดีต้อนรับกลับบ้าน 👋</p>
+          <h2 className="mt-1.5 text-[29px] font-bold tracking-tight sm:text-[34px]">จัดการเงินบ้านเราให้อุ่นใจ</h2>
+          <p className="mt-1.5 text-[15px] text-[#89938c]">ทุกเป้าหมายเริ่มต้นจากการวางแผนเล็ก ๆ ในทุกวัน</p>
         </div>
         <button
           onClick={onAddExpense}
-          className="flex w-fit items-center gap-2 rounded-xl border border-[#e7defa] bg-white px-4 py-2.5 text-[11px] font-semibold text-[#6d28d9] shadow-sm hover:bg-[#faf8ff]"
+          className="flex w-fit items-center gap-2 rounded-xl border border-[#e7defa] bg-white px-4 py-2.5 text-[14px] font-semibold text-[#6d28d9] shadow-sm hover:bg-[#faf8ff]"
         >
           <Plus size={15} /> บันทึกรายจ่าย
         </button>
@@ -993,12 +1048,53 @@ function OverviewPage({
         <div className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="text-[14px] font-bold">ภาพรวมการใช้จ่าย</h3>
-              <p className="mt-1 text-[11px] text-[#99a19b]">รายจ่ายในช่วง 30 วันที่ผ่านมา</p>
+              <h3 className="text-[18px] font-bold">ภาพรวมการใช้จ่าย</h3>
+              <p className="mt-1 text-[14px] text-[#99a19b]">
+                รายจ่าย{chartGroupingLabel} · {chartRangeLabel}
+              </p>
             </div>
-            <span className="flex items-center gap-1.5 rounded-lg bg-[#f5f7f4] px-2.5 py-1.5 text-[10px] text-[#758078]">
-              <CalendarDays size={12} /> 30 วันล่าสุด
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="relative">
+                <span className="sr-only">รูปแบบการแสดงผล</span>
+                <select
+                  value={chartGrouping}
+                  onChange={(event) =>
+                    setChartGrouping(event.target.value as "day" | "month")
+                  }
+                  className="appearance-none rounded-lg border border-[#e8ece8] bg-white py-1.5 pl-2.5 pr-7 text-[13px] font-medium text-[#657168] outline-none focus:border-[#a78bfa]"
+                >
+                  <option value="day">รายวัน</option>
+                  <option value="month">รายเดือน</option>
+                </select>
+                <ChevronDown
+                  size={13}
+                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b958e]"
+                />
+              </label>
+              <label className="relative">
+                <span className="sr-only">ช่วงเวลาของภาพรวม</span>
+                <CalendarDays
+                  size={13}
+                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#758078]"
+                />
+                <select
+                  value={chartRange}
+                  onChange={(event) => setChartRange(event.target.value)}
+                  className="appearance-none rounded-lg border border-[#e8ece8] bg-[#f5f7f4] py-1.5 pl-7 pr-7 text-[13px] font-medium text-[#657168] outline-none focus:border-[#a78bfa]"
+                >
+                  <option value="last30Days">30 วันล่าสุด</option>
+                  {monthOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={13}
+                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b958e]"
+                />
+              </label>
+            </div>
           </div>
           <div className="h-[218px] w-full sm:h-[250px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -1006,13 +1102,13 @@ function OverviewPage({
                 <CartesianGrid vertical={false} stroke="#eff1ee" strokeDasharray="3 4" />
                 <XAxis
                   dataKey="label"
-                  tick={{ fill: "#a1aaa3", fontSize: 10 }}
+                  tick={{ fill: "#a1aaa3", fontSize: 13 }}
                   axisLine={false}
                   tickLine={false}
-                  interval={4}
+                  interval={chartGrouping === "day" ? 4 : 0}
                 />
                 <YAxis
-                  tick={{ fill: "#a1aaa3", fontSize: 10 }}
+                  tick={{ fill: "#a1aaa3", fontSize: 13 }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(value: number) => (value >= 1000 ? `${value / 1000}k` : `${value}`)}
@@ -1022,13 +1118,20 @@ function OverviewPage({
                   contentStyle={{
                     border: "1px solid #e8ece8",
                     borderRadius: 12,
-                    fontSize: 11,
+                    fontSize: 14,
                     boxShadow: "0 6px 18px rgba(30,50,35,.08)",
                   }}
                   formatter={(value) => [currency(Number(value)), "รายจ่าย"]}
                   labelFormatter={(label, payload) =>
                     payload?.[0]?.payload?.date
-                      ? shortDate(String(payload[0].payload.date))
+                      ? chartGrouping === "month"
+                        ? new Intl.DateTimeFormat("th-TH", {
+                            month: "long",
+                            year: "numeric",
+                          }).format(
+                            new Date(`${payload[0].payload.date}T00:00:00`),
+                          )
+                        : shortDate(String(payload[0].payload.date))
                       : label
                   }
                 />
@@ -1036,18 +1139,18 @@ function OverviewPage({
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-2 flex items-center gap-2 text-[10px] text-[#9aa39c]">
+          <div className="mt-2 flex items-center gap-2 text-[13px] text-[#9aa39c]">
             <span className="size-2 rounded-sm bg-[#8b5cf6]" />
-            ยอดใช้จ่ายรายวัน
-            <span className="ml-auto text-[#a2aaa4]">สูงสุด {currency(maxDaily)}</span>
+            ยอดใช้จ่าย{chartGroupingLabel}
+            <span className="ml-auto text-[#a2aaa4]">สูงสุด {currency(maxSpending)}</span>
           </div>
         </div>
 
         <div className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
           <div className="mb-4 flex items-start justify-between">
             <div>
-              <h3 className="text-[14px] font-bold">ค่าใช้จ่ายตามหมวดหมู่</h3>
-              <p className="mt-1 text-[11px] text-[#99a19b]">สัดส่วนรายจ่ายเดือนนี้</p>
+              <h3 className="text-[18px] font-bold">ค่าใช้จ่ายตามหมวดหมู่</h3>
+              <p className="mt-1 text-[14px] text-[#99a19b]">สัดส่วนรายจ่ายเดือนนี้</p>
             </div>
             <button aria-label="ตัวเลือกกราฟ" className="rounded-lg p-1.5 text-[#9ca59f] hover:bg-[#f6f8f6]">
               <MoreHorizontal size={18} />
@@ -1076,13 +1179,13 @@ function OverviewPage({
                     </Pie>
                     <Tooltip
                       formatter={(value) => currency(Number(value))}
-                      contentStyle={{ border: "1px solid #e8ece8", borderRadius: 12, fontSize: 11 }}
+                      contentStyle={{ border: "1px solid #e8ece8", borderRadius: 12, fontSize: 14 }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-[9px] text-[#9aa39c]">รวมทั้งสิ้น</span>
-                  <span className="mt-1 text-[16px] font-bold">{currency(totalMonth)}</span>
+                  <span className="text-[11px] text-[#9aa39c]">รวมทั้งสิ้น</span>
+                  <span className="mt-1 text-[20px] font-bold">{currency(totalMonth)}</span>
                 </div>
               </div>
               <div className="mt-2 space-y-2.5">
@@ -1097,8 +1200,8 @@ function OverviewPage({
                       >
                         <Icon size={14} />
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-[10px] text-[#737e76]">{category.name}</span>
-                      <span className="text-[10px] font-semibold">{currency(category.total)}</span>
+                      <span className="min-w-0 flex-1 truncate text-[13px] text-[#737e76]">{category.name}</span>
+                      <span className="text-[13px] font-semibold">{currency(category.total)}</span>
                     </div>
                   );
                 })}
@@ -1113,10 +1216,10 @@ function OverviewPage({
       <section className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-[14px] font-bold">ค่าใช้จ่ายตามสมาชิก</h3>
-            <p className="mt-1 text-[11px] text-[#99a19b]">แยกตามหมวดหมู่ของแต่ละคน เดือนนี้</p>
+            <h3 className="text-[18px] font-bold">ค่าใช้จ่ายตามสมาชิก</h3>
+            <p className="mt-1 text-[14px] text-[#99a19b]">แยกตามหมวดหมู่ของแต่ละคน เดือนนี้</p>
           </div>
-          <span className="flex items-center gap-1.5 rounded-lg bg-[#f5f7f4] px-2.5 py-1.5 text-[10px] text-[#758078]">
+          <span className="flex items-center gap-1.5 rounded-lg bg-[#f5f7f4] px-2.5 py-1.5 text-[13px] text-[#758078]">
             <Users size={12} /> {spendingByMember.length} คน
           </span>
         </div>
@@ -1132,14 +1235,14 @@ function OverviewPage({
                   margin={{ top: 8, right: 4, left: -20, bottom: 0 }}
                 >
                   <CartesianGrid vertical={false} stroke="#eff1ee" strokeDasharray="3 4" />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "#9aa39c" }} />
-                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10, fill: "#9aa39c" }} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 13, fill: "#9aa39c" }} />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 13, fill: "#9aa39c" }} />
                   <Tooltip
                     formatter={(value, key) => [
                       currency(Number(value)),
                       data.categories.find((item) => item.id === key)?.name ?? String(key),
                     ]}
-                    contentStyle={{ border: "1px solid #e8ece8", borderRadius: 12, fontSize: 11 }}
+                    contentStyle={{ border: "1px solid #e8ece8", borderRadius: 12, fontSize: 14 }}
                   />
                   {data.categories.map((category, index) => (
                     <Bar
@@ -1161,11 +1264,11 @@ function OverviewPage({
                   .slice(0, 3);
                 return (
                   <div key={member.id} className="rounded-xl bg-[#f8f6ff] p-3">
-                    <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center justify-between text-[14px]">
                       <span className="font-semibold">{member.name}</span>
                       <span className="font-bold">{currency(member.total)}</span>
                     </div>
-                    <p className="mt-1 text-[10px] text-[#8a948d]">
+                    <p className="mt-1 text-[13px] text-[#8a948d]">
                       {top.length
                         ? top.map((item) => `${item.category.name} ${currency(item.total)}`).join(" • ")
                         : "ยังไม่มีรายจ่าย"}
@@ -1184,10 +1287,10 @@ function OverviewPage({
         <div className="min-w-0 rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h3 className="text-[14px] font-bold">รายการล่าสุด</h3>
-              <p className="mt-1 text-[11px] text-[#99a19b]">ค่าใช้จ่ายของครอบครัว</p>
+              <h3 className="text-[18px] font-bold">รายการล่าสุด</h3>
+              <p className="mt-1 text-[14px] text-[#99a19b]">ค่าใช้จ่ายของครอบครัว</p>
             </div>
-            <button onClick={onOpenExpenses} className="flex items-center gap-1 text-[10px] font-semibold text-[#7c3aed] hover:underline">
+            <button onClick={onOpenExpenses} className="flex items-center gap-1 text-[13px] font-semibold text-[#7c3aed] hover:underline">
               ดูทั้งหมด <ArrowRight size={13} />
             </button>
           </div>
@@ -1205,8 +1308,8 @@ function OverviewPage({
         <div className="min-w-0 rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
           <div className="mb-5 flex items-start justify-between">
             <div>
-              <h3 className="text-[14px] font-bold">ติดตามงบประมาณ</h3>
-              <p className="mt-1 text-[11px] text-[#99a19b]">ภาพรวมการใช้งบเดือนนี้</p>
+              <h3 className="text-[18px] font-bold">ติดตามงบประมาณ</h3>
+              <p className="mt-1 text-[14px] text-[#99a19b]">ภาพรวมการใช้งบเดือนนี้</p>
             </div>
             <button onClick={onOpenBudgets} className="rounded-lg p-1.5 text-[#9ca59f]" aria-label="งบประมาณ">
               <MoreHorizontal size={18} />
@@ -1228,19 +1331,19 @@ function OverviewPage({
                     <span className="flex size-7 items-center justify-center rounded-lg" style={{ color, backgroundColor: `${color}18` }}>
                       <Icon size={14} />
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[10px] font-medium text-[#68746c]">{category.name}</span>
-                    <span className="text-[10px] font-semibold">{currency(spent)}</span>
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[#68746c]">{category.name}</span>
+                    <span className="text-[13px] font-semibold">{currency(spent)}</span>
                   </div>
                   <div className="h-[5px] overflow-hidden rounded-full bg-[#f0f2ef]">
                     <div className="h-full rounded-full" style={{ width: `${ratio}%`, backgroundColor: color }} />
                   </div>
-                  <p className="mt-1 text-right text-[9px] text-[#a0a8a2]">งบ {currency(budget.amount)}</p>
+                  <p className="mt-1 text-right text-[11px] text-[#a0a8a2]">งบ {currency(budget.amount)}</p>
                 </div>
               );
             })}
           </div>
           {data.budgets.length > 5 && (
-            <button className="mt-4 flex items-center gap-1 text-[10px] font-semibold text-[#7c3aed] hover:underline">
+            <button className="mt-4 flex items-center gap-1 text-[13px] font-semibold text-[#7c3aed] hover:underline">
               จัดการงบประมาณ <ArrowRight size={13} />
             </button>
           )}
@@ -1277,9 +1380,9 @@ function SummaryCard({
           <MoreHorizontal size={16} />
         </button>
       </div>
-      <p className="mt-4 text-[10px] font-medium text-[#929c95]">{label}</p>
-      <p className="mt-1.5 truncate text-[21px] font-bold tracking-tight">{value}</p>
-      <div className="mt-2 flex items-center justify-between gap-2 text-[9px]">
+      <p className="mt-4 text-[13px] font-medium text-[#929c95]">{label}</p>
+      <p className="mt-1.5 truncate text-[26px] font-bold tracking-tight">{value}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 text-[11px]">
         <span className="truncate text-[#a0a8a2]">{helper}</span>
         <span className="shrink-0">{delta}</span>
       </div>
@@ -1312,7 +1415,7 @@ function ExpenseTable({
     <div className="overflow-x-auto">
       <table className="w-full min-w-[540px] border-collapse text-left">
         <thead>
-          <tr className="border-b border-[#eff1ee] text-[9px] font-medium text-[#a0a8a2]">
+          <tr className="border-b border-[#eff1ee] text-[11px] font-medium text-[#a0a8a2]">
             <th className="pb-3 font-medium">รายการ</th>
             <th className="pb-3 font-medium">หมวดหมู่</th>
             <th className="pb-3 font-medium">สมาชิก</th>
@@ -1333,13 +1436,13 @@ function ExpenseTable({
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px]" style={{ color, backgroundColor: `${color}18` }}>
                       <Icon size={15} />
                     </span>
-                    <span className="max-w-[150px] truncate text-[10px] font-medium text-[#4e5952]">{expense.note || category?.name || "รายจ่าย"}</span>
+                    <span className="max-w-[150px] truncate text-[13px] font-medium text-[#4e5952]">{expense.note || category?.name || "รายจ่าย"}</span>
                   </div>
                 </td>
-                <td className="py-3 pr-3 text-[10px] text-[#8a948d]">{category?.name ?? "ไม่ระบุ"}</td>
-                <td className="py-3 pr-3 text-[10px] text-[#8a948d]">{memberName(expense.userId)}</td>
-                <td className="py-3 pr-3 text-[10px] text-[#8a948d]">{shortDate(expense.date)}</td>
-                <td className="py-3 text-right text-[10px] font-semibold">{currency(expense.amount)}</td>
+                <td className="py-3 pr-3 text-[13px] text-[#8a948d]">{category?.name ?? "ไม่ระบุ"}</td>
+                <td className="py-3 pr-3 text-[13px] text-[#8a948d]">{memberName(expense.userId)}</td>
+                <td className="py-3 pr-3 text-[13px] text-[#8a948d]">{shortDate(expense.date)}</td>
+                <td className="py-3 text-right text-[13px] font-semibold">{currency(expense.amount)}</td>
                 <td className="py-3 pl-2">
                   <div className="flex items-center justify-end gap-1 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
                     {canEdit() && (
@@ -1401,10 +1504,10 @@ function ExpensesPage({
     <section className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <p className="text-[11px] text-[#98a29b]">จัดการและติดตามรายจ่ายของทุกคนในบ้าน</p>
-          <h2 className="mt-1.5 text-[21px] font-bold">รายการใช้จ่ายทั้งหมด</h2>
+          <p className="text-[14px] text-[#98a29b]">จัดการและติดตามรายจ่ายของทุกคนในบ้าน</p>
+          <h2 className="mt-1.5 text-[26px] font-bold">รายการใช้จ่ายทั้งหมด</h2>
         </div>
-        <button onClick={onAdd} className="flex w-fit items-center gap-2 rounded-xl bg-[#7c3aed] px-4 py-2.5 text-[11px] font-semibold text-white hover:bg-[#6d28d9]">
+        <button onClick={onAdd} className="flex w-fit items-center gap-2 rounded-xl bg-[#7c3aed] px-4 py-2.5 text-[14px] font-semibold text-white hover:bg-[#6d28d9]">
           <Plus size={15} /> เพิ่มรายการใหม่
         </button>
       </div>
@@ -1416,8 +1519,8 @@ function ExpensesPage({
       <div className="rounded-2xl border border-[#e9ece8] bg-white p-4 sm:p-6">
         <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <h3 className="text-[14px] font-bold">รายการล่าสุด</h3>
-            <p className="mt-1 text-[10px] text-[#99a19b]">ค้นหา แก้ไข หรือลบรายการของคุณ</p>
+            <h3 className="text-[18px] font-bold">รายการล่าสุด</h3>
+            <p className="mt-1 text-[13px] text-[#99a19b]">ค้นหา แก้ไข หรือลบรายการของคุณ</p>
           </div>
           <label className="flex max-w-full items-center gap-2 rounded-xl border border-[#e9ece8] px-3 py-2 text-[#89938c] sm:w-[230px]">
             <Search size={15} />
@@ -1425,7 +1528,7 @@ function ExpensesPage({
               value={searchTerm}
               onChange={(event) => onSearch(event.target.value)}
               placeholder="ค้นหารายการ..."
-              className="w-full bg-transparent text-[11px] text-[#39443c] outline-none placeholder:text-[#a6ada8]"
+              className="w-full bg-transparent text-[14px] text-[#39443c] outline-none placeholder:text-[#a6ada8]"
             />
           </label>
         </div>
@@ -1469,8 +1572,8 @@ function BudgetsPage({
   return (
     <section className="space-y-5">
       <div>
-        <p className="text-[11px] text-[#98a29b]">ตั้งเป้าหมายการใช้จ่ายให้ทุกหมวดหมู่</p>
-        <h2 className="mt-1.5 text-[21px] font-bold">งบประมาณของครอบครัว</h2>
+        <p className="text-[14px] text-[#98a29b]">ตั้งเป้าหมายการใช้จ่ายให้ทุกหมวดหมู่</p>
+        <h2 className="mt-1.5 text-[26px] font-bold">งบประมาณของครอบครัว</h2>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <MiniMetric label="งบประมาณรวม" value={currency(totalBudget)} icon={SlidersHorizontal} />
@@ -1480,8 +1583,8 @@ function BudgetsPage({
       <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
         <div className="rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-6">
           <div className="mb-5">
-            <h3 className="text-[14px] font-bold">งบรายหมวดหมู่</h3>
-            <p className="mt-1 text-[10px] text-[#99a19b]">ปรับงบสำหรับเดือนนี้ได้ทุกเมื่อ</p>
+            <h3 className="text-[18px] font-bold">งบรายหมวดหมู่</h3>
+            <p className="mt-1 text-[13px] text-[#99a19b]">ปรับงบสำหรับเดือนนี้ได้ทุกเมื่อ</p>
           </div>
           <div className="space-y-5">
             {data.categories.map((category, index) => {
@@ -1511,8 +1614,8 @@ function BudgetsPage({
             <div className="mb-4 flex items-center gap-2">
               <span className="flex size-8 items-center justify-center rounded-xl bg-[#f3edff] text-[#7c3aed]"><Sparkles size={15} /></span>
               <div>
-                <h3 className="text-[13px] font-bold">เพิ่มหมวดหมู่</h3>
-                <p className="mt-0.5 text-[10px] text-[#99a19b]">สร้างหมวดหมู่ที่เหมาะกับบ้านคุณ</p>
+                <h3 className="text-[16px] font-bold">เพิ่มหมวดหมู่</h3>
+                <p className="mt-0.5 text-[13px] text-[#99a19b]">สร้างหมวดหมู่ที่เหมาะกับบ้านคุณ</p>
               </div>
             </div>
             {isAdmin ? (
@@ -1522,17 +1625,17 @@ function BudgetsPage({
                   onChange={(event) => setNewCategory(event.target.value)}
                   maxLength={40}
                   placeholder="ชื่อหมวดหมู่"
-                  className="min-w-0 flex-1 rounded-xl border border-[#e7e2ee] px-3 py-2.5 text-[11px] outline-none transition focus:border-[#a78bfa]"
+                  className="min-w-0 flex-1 rounded-xl border border-[#e7e2ee] px-3 py-2.5 text-[14px] outline-none transition focus:border-[#a78bfa]"
                 />
-                <button type="submit" className="flex items-center gap-1.5 rounded-xl bg-[#7c3aed] px-3 text-[10px] font-semibold text-white hover:bg-[#6d28d9]">
+                <button type="submit" className="flex items-center gap-1.5 rounded-xl bg-[#7c3aed] px-3 text-[13px] font-semibold text-white hover:bg-[#6d28d9]">
                   <Plus size={14} /> เพิ่ม
                 </button>
               </form>
             ) : (
-              <p className="text-[11px] text-[#8d9790]">เฉพาะผู้ดูแลครอบครัวเท่านั้นที่เพิ่มหมวดหมู่ได้</p>
+              <p className="text-[14px] text-[#8d9790]">เฉพาะผู้ดูแลครอบครัวเท่านั้นที่เพิ่มหมวดหมู่ได้</p>
             )}
             <div className="mt-4 space-y-2 border-t border-[#eff1ee] pt-4">
-              <p className="mb-2 text-[10px] font-semibold text-[#8a948d]">หมวดหมู่ทั้งหมด</p>
+              <p className="mb-2 text-[13px] font-semibold text-[#8a948d]">หมวดหมู่ทั้งหมด</p>
               {data.categories.map((category) => (
                 <div key={category.id} className="flex items-center gap-2 rounded-lg px-1 py-1.5">
                   {categoryBeingEdited === category.id ? (
@@ -1542,7 +1645,7 @@ function BudgetsPage({
                         maxLength={80}
                         onChange={(event) => setCategoryNameDraft(event.target.value)}
                         aria-label={`ชื่อหมวดหมู่ ${category.name}`}
-                        className="min-w-0 flex-1 rounded-lg border border-[#e7e2ee] px-2 py-1.5 text-[10px] outline-none focus:border-[#a78bfa]"
+                        className="min-w-0 flex-1 rounded-lg border border-[#e7e2ee] px-2 py-1.5 text-[13px] outline-none focus:border-[#a78bfa]"
                       />
                       <button
                         onClick={() => onRenameCategory(category)}
@@ -1561,7 +1664,7 @@ function BudgetsPage({
                     </>
                   ) : (
                     <>
-                      <span className="min-w-0 flex-1 truncate text-[10px] text-[#667269]">{category.name}</span>
+                      <span className="min-w-0 flex-1 truncate text-[13px] text-[#667269]">{category.name}</span>
                       {isAdmin && (
                         <button
                           onClick={() => {
@@ -1584,8 +1687,8 @@ function BudgetsPage({
             <div className="flex items-start gap-3">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#fff3e4] text-[#d09a4f]"><CircleHelp size={17} /></span>
               <div>
-                <h3 className="text-[12px] font-bold">เคล็ดลับการวางแผน</h3>
-                <p className="mt-1.5 text-[10px] leading-5 text-[#89938c]">ลองตั้งงบให้สอดคล้องกับรายรับ และเผื่องบสำรองสำหรับเหตุการณ์ไม่คาดคิด</p>
+                <h3 className="text-[15px] font-bold">เคล็ดลับการวางแผน</h3>
+                <p className="mt-1.5 text-[13px] leading-5 text-[#89938c]">ลองตั้งงบให้สอดคล้องกับรายรับ และเผื่องบสำรองสำหรับเหตุการณ์ไม่คาดคิด</p>
               </div>
             </div>
           </div>
@@ -1633,13 +1736,13 @@ function BudgetRow({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="truncate text-[11px] font-semibold">{category.name}</span>
-            <span className={`text-[10px] font-semibold ${overBudget ? "text-[#bf604d]" : "text-[#58635b]"}`}>{currency(spent)}</span>
+            <span className="truncate text-[14px] font-semibold">{category.name}</span>
+            <span className={`text-[13px] font-semibold ${overBudget ? "text-[#bf604d]" : "text-[#58635b]"}`}>{currency(spent)}</span>
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#f0f2ef]">
             <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, backgroundColor: overBudget ? "#d97762" : color }} />
           </div>
-          <div className="mt-2 flex items-center justify-between gap-2 text-[9px] text-[#9aa39c]">
+          <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#9aa39c]">
             {editing ? (
               <form onSubmit={save} className="flex items-center gap-1.5">
                 <span>ตั้งงบ</span>
@@ -1651,7 +1754,7 @@ function BudgetRow({
                   step="1"
                   autoFocus
                   aria-label={`งบประมาณ${category.name}`}
-                  className="w-24 rounded-md border border-[#dce5dd] px-2 py-1 text-[10px] text-[#364238] outline-none"
+                  className="w-24 rounded-md border border-[#dce5dd] px-2 py-1 text-[13px] text-[#364238] outline-none"
                 />
                 <button type="submit" aria-label="บันทึกงบ" className="rounded-md bg-[#f3edff] p-1 text-[#6d28d9]"><Check size={13} /></button>
                 <button type="button" aria-label="ยกเลิก" onClick={() => setEditing(false)} className="rounded-md p-1 text-[#909a93]"><X size={13} /></button>
@@ -1712,21 +1815,21 @@ function SettingsPage({
   return (
     <section className="space-y-5">
       <div>
-        <p className="text-[11px] text-[#98a29b]">จัดการบัญชีและข้อมูลของครอบครัว</p>
-        <h2 className="mt-1.5 text-[21px] font-bold">ตั้งค่าบัญชี</h2>
+        <p className="text-[14px] text-[#98a29b]">จัดการบัญชีและข้อมูลของครอบครัว</p>
+        <h2 className="mt-1.5 text-[26px] font-bold">ตั้งค่าบัญชี</h2>
       </div>
       <div className="max-w-3xl rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-7">
         <div className="mb-3 flex items-center gap-2">
           <Users size={16} className="text-[#7c3aed]" />
-          <h3 className="text-[14px] font-bold">สมาชิกครอบครัว</h3>
+          <h3 className="text-[18px] font-bold">สมาชิกครอบครัว</h3>
         </div>
-        <p className="mb-4 text-[10px] leading-5 text-[#89938c]">
+        <p className="mb-4 text-[13px] leading-5 text-[#89938c]">
           ผู้ดูแลจัดการหมวดหมู่ งบประมาณ สมาชิก และแก้ไข/ลบรายการได้ทุกคน ส่วนสมาชิกเพิ่มและลบได้เฉพาะรายการของตัวเอง
         </p>
         <ul className="divide-y divide-[#f2f3f1]">
           {members.map((member) => (
             <li key={member.id} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="text-[11px] font-medium">
+              <span className="text-[14px] font-medium">
                 {member.name}
                 {member.id === currentUserId && <span className="ml-1.5 text-[#9aa29c]">(คุณ)</span>}
               </span>
@@ -1735,19 +1838,19 @@ function SettingsPage({
                   aria-label={`บทบาทของ ${member.name}`}
                   value={member.role}
                   onChange={(event) => onChangeRole(member, event.target.value as Role)}
-                  className="rounded-lg border border-[#e9ece8] bg-white px-2 py-1 text-[11px]"
+                  className="rounded-lg border border-[#e9ece8] bg-white px-2 py-1 text-[14px]"
                 >
                   <option value="member">สมาชิก</option>
                   <option value="admin">ผู้ดูแล</option>
                 </select>
               ) : (
-                <span className="rounded-full bg-[#f3edff] px-2.5 py-0.5 text-[10px] text-[#6d28d9]">{roleLabel(member.role)}</span>
+                <span className="rounded-full bg-[#f3edff] px-2.5 py-0.5 text-[13px] text-[#6d28d9]">{roleLabel(member.role)}</span>
               )}
             </li>
           ))}
           {invites.map((invite) => (
             <li key={invite.id} className="flex items-center justify-between gap-3 py-2.5">
-              <span className="min-w-0 truncate text-[11px] text-[#68746c]">
+              <span className="min-w-0 truncate text-[14px] text-[#68746c]">
                 {invite.email} <span className="text-[#a0a8a2]">(รอการสมัคร • {roleLabel(invite.role)})</span>
               </span>
               {canManage && (
@@ -1770,18 +1873,18 @@ function SettingsPage({
               value={inviteEmail}
               onChange={(event) => setInviteEmail(event.target.value)}
               placeholder="อีเมลของสมาชิกที่ต้องการเชิญ"
-              className="min-w-0 flex-1 rounded-xl border border-[#e9ece8] px-3 py-2 text-[11px] outline-none"
+              className="min-w-0 flex-1 rounded-xl border border-[#e9ece8] px-3 py-2 text-[14px] outline-none"
             />
             <select
               aria-label="บทบาท"
               value={inviteRole}
               onChange={(event) => setInviteRole(event.target.value as Role)}
-              className="rounded-xl border border-[#e9ece8] bg-white px-3 py-2 text-[11px]"
+              className="rounded-xl border border-[#e9ece8] bg-white px-3 py-2 text-[14px]"
             >
               <option value="member">สมาชิก</option>
               <option value="admin">ผู้ดูแล</option>
             </select>
-            <button className="rounded-xl bg-[#7c3aed] px-4 py-2 text-[11px] font-semibold text-white hover:bg-[#6d28d9]">
+            <button className="rounded-xl bg-[#7c3aed] px-4 py-2 text-[14px] font-semibold text-white hover:bg-[#6d28d9]">
               เชิญสมาชิก
             </button>
           </form>
@@ -1789,10 +1892,10 @@ function SettingsPage({
       </div>
       <div className="max-w-3xl rounded-2xl border border-[#e9ece8] bg-white p-5 sm:p-7">
         <div className="flex items-center gap-4 border-b border-[#eff1ee] pb-5">
-          <span className="flex size-12 items-center justify-center rounded-2xl bg-[#efe7ff] text-[14px] font-bold text-[#6d28d9]">{userName.slice(0, 2)}</span>
+          <span className="flex size-12 items-center justify-center rounded-2xl bg-[#efe7ff] text-[18px] font-bold text-[#6d28d9]">{userName.slice(0, 2)}</span>
           <div>
-            <h3 className="text-[14px] font-bold">{userName}</h3>
-            <p className="mt-1 text-[10px] text-[#929c95]">{isDemo ? "กำลังใช้ข้อมูลตัวอย่าง" : isAdmin ? "ผู้ดูแลครอบครัว" : "สมาชิกครอบครัว"}</p>
+            <h3 className="text-[18px] font-bold">{userName}</h3>
+            <p className="mt-1 text-[13px] text-[#929c95]">{isDemo ? "กำลังใช้ข้อมูลตัวอย่าง" : isAdmin ? "ผู้ดูแลครอบครัว" : "สมาชิกครอบครัว"}</p>
           </div>
         </div>
         <div className="space-y-4 py-5">
@@ -1801,14 +1904,14 @@ function SettingsPage({
           <SettingLine label="ข้อมูลครอบครัว" value={isDemo ? "โหมดตัวอย่าง" : "ข้อมูลส่วนตัวและรายจ่าย"} />
         </div>
         <div className="rounded-xl bg-[#f8f6ff] p-4">
-          <p className="text-[11px] font-semibold">ข้อมูลของคุณปลอดภัย</p>
-          <p className="mt-1.5 text-[10px] leading-5 text-[#89938c]">ข้อมูลครอบครัวถูกแยกตามสิทธิ์การเข้าถึง และจัดเก็บด้วย Supabase Row Level Security</p>
+          <p className="text-[14px] font-semibold">ข้อมูลของคุณปลอดภัย</p>
+          <p className="mt-1.5 text-[13px] leading-5 text-[#89938c]">ข้อมูลครอบครัวถูกแยกตามสิทธิ์การเข้าถึง และจัดเก็บด้วย Supabase Row Level Security</p>
         </div>
         <div className="mt-5 flex flex-wrap gap-3">
           {isDemo ? (
-            <Link href="/auth" className="rounded-xl bg-[#7c3aed] px-4 py-2.5 text-[11px] font-semibold text-white hover:bg-[#6d28d9]">เข้าสู่ระบบ / สมัครสมาชิก</Link>
+            <Link href="/auth" className="rounded-xl bg-[#7c3aed] px-4 py-2.5 text-[14px] font-semibold text-white hover:bg-[#6d28d9]">เข้าสู่ระบบ / สมัครสมาชิก</Link>
           ) : (
-            <button onClick={onSignOut} className="flex items-center gap-2 rounded-xl border border-[#eadfdb] px-4 py-2.5 text-[11px] font-semibold text-[#ad6354] hover:bg-[#fff8f6]">
+            <button onClick={onSignOut} className="flex items-center gap-2 rounded-xl border border-[#eadfdb] px-4 py-2.5 text-[14px] font-semibold text-[#ad6354] hover:bg-[#fff8f6]">
               <LogOut size={14} /> ออกจากระบบ
             </button>
           )}
@@ -1821,8 +1924,8 @@ function SettingsPage({
 function SettingLine({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="text-[11px] text-[#89938c]">{label}</span>
-      <span className="text-right text-[11px] font-medium text-[#4d5850]">{value}</span>
+      <span className="text-[14px] text-[#89938c]">{label}</span>
+      <span className="text-right text-[14px] font-medium text-[#4d5850]">{value}</span>
     </div>
   );
 }
@@ -1831,10 +1934,10 @@ function MiniMetric({ label, value, icon: Icon }: { label: string; value: string
   return (
     <div className="rounded-2xl border border-[#e9ece8] bg-white p-4">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] text-[#929c95]">{label}</p>
+        <p className="text-[13px] text-[#929c95]">{label}</p>
         <Icon size={16} className="text-[#a78bfa]" />
       </div>
-      <p className="mt-2 text-[17px] font-bold">{value}</p>
+      <p className="mt-2 text-[21px] font-bold">{value}</p>
     </div>
   );
 }
@@ -1843,8 +1946,8 @@ function EmptyState({ icon: Icon, title, detail }: { icon: LucideIcon; title: st
   return (
     <div className="flex min-h-[150px] flex-col items-center justify-center text-center">
       <span className="flex size-10 items-center justify-center rounded-xl bg-[#f3f6f3] text-[#8da493]"><Icon size={18} /></span>
-      <p className="mt-3 text-[11px] font-semibold text-[#59645c]">{title}</p>
-      <p className="mt-1 text-[10px] text-[#9ba49d]">{detail}</p>
+      <p className="mt-3 text-[14px] font-semibold text-[#59645c]">{title}</p>
+      <p className="mt-1 text-[13px] text-[#9ba49d]">{detail}</p>
     </div>
   );
 }
@@ -1878,16 +1981,16 @@ function ExpenseDialog({
       >
         <div className="mb-5 flex items-start justify-between">
           <div>
-            <p className="text-[10px] font-medium text-[#94a097]">บันทึกการเงินในบ้าน</p>
-            <h2 id="expense-dialog-title" className="mt-1 text-[18px] font-bold">{editing ? "แก้ไขรายการใช้จ่าย" : "เพิ่มรายการใช้จ่าย"}</h2>
+            <p className="text-[13px] font-medium text-[#94a097]">บันทึกการเงินในบ้าน</p>
+            <h2 id="expense-dialog-title" className="mt-1 text-[23px] font-bold">{editing ? "แก้ไขรายการใช้จ่าย" : "เพิ่มรายการใช้จ่าย"}</h2>
           </div>
           <button aria-label="ปิดหน้าต่าง" onClick={onClose} className="rounded-lg p-2 text-[#87928a] hover:bg-[#f5f7f5]"><X size={18} /></button>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
           <label className="block">
-            <span className="mb-1.5 block text-[10px] font-semibold text-[#647067]">จำนวนเงิน (บาท)</span>
+            <span className="mb-1.5 block text-[13px] font-semibold text-[#647067]">จำนวนเงิน (บาท)</span>
             <div className="flex items-center rounded-xl border border-[#e7e2ee] px-3 focus-within:border-[#a78bfa]">
-              <span className="text-[13px] text-[#a2aaa4]">฿</span>
+              <span className="text-[16px] text-[#a2aaa4]">฿</span>
               <input
                 type="number"
                 min="0.01"
@@ -1897,46 +2000,46 @@ function ExpenseDialog({
                 value={form.amount}
                 onChange={(event) => onChange({ ...form, amount: event.target.value })}
                 placeholder="0.00"
-                className="w-full bg-transparent px-2 py-3 text-[14px] font-semibold outline-none placeholder:font-normal placeholder:text-[#b1b8b2]"
+                className="w-full bg-transparent px-2 py-3 text-[18px] font-semibold outline-none placeholder:font-normal placeholder:text-[#b1b8b2]"
               />
             </div>
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[10px] font-semibold text-[#647067]">หมวดหมู่</span>
+            <span className="mb-1.5 block text-[13px] font-semibold text-[#647067]">หมวดหมู่</span>
             <select
               required
               value={form.categoryId}
               onChange={(event) => onChange({ ...form, categoryId: event.target.value })}
-              className="w-full appearance-none rounded-xl border border-[#e7e2ee] bg-white px-3 py-3 text-[11px] outline-none focus:border-[#a78bfa]"
+              className="w-full appearance-none rounded-xl border border-[#e7e2ee] bg-white px-3 py-3 text-[14px] outline-none focus:border-[#a78bfa]"
             >
               <option value="" disabled>เลือกหมวดหมู่</option>
               {categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
             </select>
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[10px] font-semibold text-[#647067]">วันที่</span>
+            <span className="mb-1.5 block text-[13px] font-semibold text-[#647067]">วันที่</span>
             <input
               type="date"
               required
               value={form.date}
               onChange={(event) => onChange({ ...form, date: event.target.value })}
-              className="w-full rounded-xl border border-[#e7e2ee] bg-white px-3 py-3 text-[11px] outline-none focus:border-[#a78bfa]"
+              className="w-full rounded-xl border border-[#e7e2ee] bg-white px-3 py-3 text-[14px] outline-none focus:border-[#a78bfa]"
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-[10px] font-semibold text-[#647067]">รายละเอียด <span className="font-normal text-[#a5ada7]">(ไม่บังคับ)</span></span>
+            <span className="mb-1.5 block text-[13px] font-semibold text-[#647067]">รายละเอียด <span className="font-normal text-[#a5ada7]">(ไม่บังคับ)</span></span>
             <textarea
               rows={2}
               maxLength={180}
               value={form.note}
               onChange={(event) => onChange({ ...form, note: event.target.value })}
               placeholder="เช่น ซื้อของเข้าบ้าน"
-              className="w-full resize-none rounded-xl border border-[#e7e2ee] px-3 py-3 text-[11px] outline-none placeholder:text-[#aeb6af] focus:border-[#a78bfa]"
+              className="w-full resize-none rounded-xl border border-[#e7e2ee] px-3 py-3 text-[14px] outline-none placeholder:text-[#aeb6af] focus:border-[#a78bfa]"
             />
           </label>
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-[#e5eae5] py-3 text-[11px] font-semibold text-[#657168] hover:bg-[#f7f8f7]">ยกเลิก</button>
-            <button disabled={saving} type="submit" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#7c3aed] py-3 text-[11px] font-semibold text-white hover:bg-[#6d28d9] disabled:cursor-wait disabled:opacity-70">
+            <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-[#e5eae5] py-3 text-[14px] font-semibold text-[#657168] hover:bg-[#f7f8f7]">ยกเลิก</button>
+            <button disabled={saving} type="submit" className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#7c3aed] py-3 text-[14px] font-semibold text-white hover:bg-[#6d28d9] disabled:cursor-wait disabled:opacity-70">
               {saving ? "กำลังบันทึก..." : <><Check size={14} /> {editing ? "บันทึกการแก้ไข" : "บันทึกรายการ"}</>}
             </button>
           </div>

@@ -118,7 +118,17 @@ async function DashboardContent() {
   const last30DaysStart = bangkokDateString(
     new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000),
   );
-  const dataStart = monthStart < last30DaysStart ? monthStart : last30DaysStart;
+  const historyStart = bangkokDateString(
+    new Date(
+      Date.UTC(
+        todayPart("year"),
+        todayPart("month") - 12,
+        todayPart("day"),
+      ),
+    ),
+  );
+  const dataStart =
+    [monthStart, last30DaysStart, historyStart].sort()[0];
 
   const [
     { data: categories, error: categoryError },
