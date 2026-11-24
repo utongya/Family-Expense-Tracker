@@ -147,6 +147,50 @@ function shortDate(value: string) {
   }).format(new Date(`${value}T00:00:00`));
 }
 
+type BudgetStatus = {
+  label: "ตามแผน" | "ใกล้เกินงบ" | "เกินงบแล้ว";
+  percentage: number;
+  badgeClass: string;
+  progressColor: string;
+};
+
+function getBudgetStatus(spent: number, budget: number): BudgetStatus {
+  const usage = (spent / budget) * 100;
+  const percentage = Math.round(usage);
+  if (usage >= 100) {
+    return {
+      label: "เกินงบแล้ว",
+      percentage,
+      badgeClass: "border-[#f3c8c1] bg-[#fff1ee] text-[#b84f3d]",
+      progressColor: "#dc6b57",
+    };
+  }
+  if (usage >= 80) {
+    return {
+      label: "ใกล้เกินงบ",
+      percentage,
+      badgeClass: "border-[#f0d49b] bg-[#fff7e5] text-[#a87014]",
+      progressColor: "#e0a63b",
+    };
+  }
+  return {
+    label: "ตามแผน",
+    percentage,
+    badgeClass: "border-[#cfe5d4] bg-[#eff8f1] text-[#4e7b58]",
+    progressColor: "#69a576",
+  };
+}
+
+function BudgetStatusBadge({ status }: { status: BudgetStatus }) {
+  return (
+    <span
+      className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:text-[11px] ${status.badgeClass}`}
+    >
+      {status.label} · {status.percentage}%
+    </span>
+  );
+}
+
 function getCategoryColor(index: number) {
   return categoryColors[index % categoryColors.length];
 }
@@ -1432,7 +1476,8 @@ function OverviewPage({
               const spent = monthExpenses
                 .filter((expense) => expense.categoryId === budget.categoryId)
                 .reduce((sum, expense) => sum + expense.amount, 0);
-              const ratio = budget.amount > 0 ? Math.min(100, (spent / budget.amount) * 100) : 0;
+              const status = getBudgetStatus(spent, budget.amount);
+              const ratio = Math.min(100, status.percentage);
               const color = getCategoryColor(data.categories.indexOf(category));
               const Icon = getCategoryIcon(category.icon);
               return (
@@ -1442,10 +1487,14 @@ function OverviewPage({
                       <Icon size={14} />
                     </span>
                     <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-[#68746c]">{category.name}</span>
+                    <BudgetStatusBadge status={status} />
                     <span className="text-[13px] font-semibold">{currency(spent)}</span>
                   </div>
                   <div className="h-[5px] overflow-hidden rounded-full bg-[#f0f2ef]">
-                    <div className="h-full rounded-full" style={{ width: `${ratio}%`, backgroundColor: color }} />
+                    <div
+                      className="h-full rounded-full transition-[width,background-color]"
+                      style={{ width: `${ratio}%`, backgroundColor: status.progressColor }}
+                    />
                   </div>
                   <p className="mt-1 text-right text-[11px] text-[#a0a8a2]">งบ {currency(budget.amount)}</p>
                 </div>
@@ -1838,8 +1887,8 @@ function BudgetRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(String(budget || ""));
-  const percentage = budget ? Math.min(100, (spent / budget) * 100) : 0;
-  const overBudget = spent > budget && budget > 0;
+  const status = budget > 0 ? getBudgetStatus(spent, budget) : null;
+  const percentage = status ? Math.min(100, status.percentage) : 0;
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1858,10 +1907,16 @@ function BudgetRow({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="truncate text-[14px] font-semibold">{category.name}</span>
-            <span className={`text-[13px] font-semibold ${overBudget ? "text-[#bf604d]" : "text-[#58635b]"}`}>{currency(spent)}</span>
+            <div className="flex items-center gap-2">
+              {status && <BudgetStatusBadge status={status} />}
+              <span className="text-[13px] font-semibold text-[#58635b]">{currency(spent)}</span>
+            </div>
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#f0f2ef]">
-            <div className="h-full rounded-full transition-all" style={{ width: `${percentage}%`, backgroundColor: overBudget ? "#d97762" : color }} />
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${percentage}%`, backgroundColor: status?.progressColor ?? color }}
+            />
           </div>
           <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#9aa39c]">
             {editing ? (
