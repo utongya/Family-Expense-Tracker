@@ -303,7 +303,8 @@ export function Dashboard({
     : monthExpenses.reduce((total, expense) => total + expense.amount, 0);
   const currentBudgets = data.budgets.filter(
     (budget) =>
-      !budget.periodMonth || budget.periodMonth === currentMonthStart.slice(0, 7),
+      !budget.periodMonth ||
+      budget.periodMonth.slice(0, 7) === currentMonthStart.slice(0, 7),
   );
   const totalBudget = usingServerSummary
     ? initialSummary!.totalBudget
@@ -470,7 +471,8 @@ export function Dashboard({
             (item) =>
               item.categoryId !== categoryId ||
               (item.periodMonth &&
-                item.periodMonth !== currentMonthStart.slice(0, 7)),
+                item.periodMonth.slice(0, 7) !==
+                  currentMonthStart.slice(0, 7)),
           ),
           budget,
         ],
@@ -1223,7 +1225,7 @@ function OverviewPage({
   );
   const rangeBudgets = data.budgets
     .filter((budget) => {
-      const periodMonth = budget.periodMonth ?? currentMonth;
+      const periodMonth = budget.periodMonth?.slice(0, 7) ?? currentMonth;
       return periodMonth >= rangeStartMonth && periodMonth <= rangeEndMonth;
     });
   const totalMonth = rangeExpenses.reduce(

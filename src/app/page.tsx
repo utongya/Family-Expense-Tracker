@@ -188,7 +188,7 @@ async function DashboardContent() {
       id: budget.id,
       categoryId: budget.category_id,
       amount: Number(budget.amount),
-      periodMonth: budget.period_month,
+      periodMonth: budget.period_month?.slice(0, 7),
     })),
     expenses: (expenses ?? []).map((expense) => ({
       id: expense.id,
@@ -203,7 +203,9 @@ async function DashboardContent() {
     (expense) => expense.date >= monthStart,
   );
   const currentBudgets = initialData.budgets.filter(
-    (budget) => budget.periodMonth === monthStart.slice(0, 7),
+    (budget) =>
+      !budget.periodMonth ||
+      budget.periodMonth.slice(0, 7) === monthStart.slice(0, 7),
   );
   const dailyTotals = Array.from({ length: 30 }, (_, index) => {
     const date = new Date(
