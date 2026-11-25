@@ -12,6 +12,7 @@ import {
   CircleHelp,
   Coffee,
   CreditCard,
+  HeartPulse,
   House,
   LayoutDashboard,
   LogIn,
@@ -42,7 +43,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   Bar,
   BarChart,
@@ -109,6 +116,7 @@ const categoryIcons: Record<string, LucideIcon> = {
   utensils: Utensils,
   "shopping-bag": ShoppingBag,
   house: House,
+  "heart-pulse": HeartPulse,
   car: Car,
   landmark: Landmark,
   lightbulb: Lightbulb,
@@ -205,6 +213,50 @@ function getMonthLabel(date: Date) {
     year: "numeric",
   }).format(date);
 }
+
+function getMonthOptions(referenceDate: Date) {
+  return Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(
+      referenceDate.getFullYear(),
+      referenceDate.getMonth() - index,
+      1,
+    );
+    return {
+      value: localDateString(date).slice(0, 7),
+      label: getMonthLabel(date),
+    };
+  });
+}
+
+function getMonthRangeBounds(
+  startMonth: string,
+  endMonth: string,
+  referenceDate: Date,
+) {
+  const start = new Date(`${startMonth}-01T00:00:00`);
+  const startKey = localDateString(start);
+  const endMonthStart = new Date(`${endMonth}-01T00:00:00`);
+  const isCurrentMonth =
+    endMonthStart.getFullYear() === referenceDate.getFullYear() &&
+    endMonthStart.getMonth() === referenceDate.getMonth();
+  const end = isCurrentMonth
+    ? referenceDate
+    : new Date(endMonthStart.getFullYear(), endMonthStart.getMonth() + 1, 0);
+  return { start, end, startKey, endKey: localDateString(end) };
+}
+
+function formatMonthRange(
+  startMonth: string,
+  endMonth: string,
+  monthOptions: { value: string; label: string }[],
+) {
+  const startLabel =
+    monthOptions.find((option) => option.value === startMonth)?.label ??
+    startMonth;
+  const endLabel =
+    monthOptions.find((option) => option.value === endMonth)?.label ?? endMonth;
+  return startMonth === endMonth ? startLabel : `${startLabel} – ${endLabel}`;
+}
  
 export function Dashboard({
   initialData,
@@ -231,6 +283,12 @@ export function Dashboard({
   const [newCategory, setNewCategory] = useState("");
   const [categoryBeingEdited, setCategoryBeingEdited] = useState<string | null>(null);
   const [categoryNameDraft, setCategoryNameDraft] = useState("");
+  const [rangeStartMonth, setRangeStartMonth] = useState(() =>
+    localDateString(new Date()).slice(0, 7),
+  );
+  const [rangeEndMonth, setRangeEndMonth] = useState(() =>
+    localDateString(new Date()).slice(0, 7),
+  );
 
   const now = new Date();
   const currentMonthStart = localDateString(
@@ -243,44 +301,13 @@ export function Dashboard({
   const totalMonth = usingServerSummary
     ? initialSummary!.totalMonth
     : monthExpenses.reduce((total, expense) => total + expense.amount, 0);
+  const currentBudgets = data.budgets.filter(
+    (budget) =>
+      !budget.periodMonth || budget.periodMonth === currentMonthStart.slice(0, 7),
+  );
   const totalBudget = usingServerSummary
     ? initialSummary!.totalBudget
-    : data.budgets.reduce((total, budget) => total + budget.amount, 0);
-  const remaining = totalBudget - totalMonth;
-  const savingsPercent =
-    totalBudget > 0 ? Math.max(0, Math.round((remaining / totalBudget) * 100)) : 0;
-
-  const spendingByCategory = data.categories
-    .map((category) => ({
-      ...category,
-      total: usingServerSummary
-        ? initialSummary!.categoryTotals[category.id] ?? 0
-        : monthExpenses
-            .filter((expense) => expense.categoryId === category.id)
-            .reduce((sum, expense) => sum + expense.amount, 0),
-    }))
-    .filter((category) => category.total > 0)
-    .sort((a, b) => b.total - a.total);
-
-  const spendingByMember = data.members
-    .filter((member) => !member.removedAt)
-    .map((member) => {
-      const rows = monthExpenses.filter((expense) => expense.userId === member.id);
-      return {
-        ...member,
-        total: rows.reduce((sum, expense) => sum + expense.amount, 0),
-        byCategory: Object.fromEntries(
-          data.categories.map((category) => [
-            category.id,
-            rows
-              .filter((expense) => expense.categoryId === category.id)
-              .reduce((sum, expense) => sum + expense.amount, 0),
-          ]),
-        ) as Record<string, number>,
-      };
-    })
-    .sort((a, b) => b.total - a.total);
-
+    : currentBudgets.reduce((total, budget) => total + budget.amount, 0);
   const canEditExpense = () => isDemo || isAdmin;
   const canDeleteExpense = (expense: Expense) =>
     isDemo || isAdmin || expense.userId === userId;
@@ -412,11 +439,14 @@ export function Dashboard({
   }
 
   async function updateBudget(categoryId: string, amount: number) {
-    const existing = data.budgets.find((budget) => budget.categoryId === categoryId);
+    const existing = currentBudgets.find(
+      (budget) => budget.categoryId === categoryId,
+    );
     const budget: Budget = {
       id: existing?.id ?? crypto.randomUUID(),
       categoryId,
       amount,
+      periodMonth: currentMonthStart.slice(0, 7),
     };
     try {
       if (!isDemo) {
@@ -436,7 +466,12 @@ export function Dashboard({
       setData((current) => ({
         ...current,
         budgets: [
-          ...current.budgets.filter((item) => item.categoryId !== categoryId),
+          ...current.budgets.filter(
+            (item) =>
+              item.categoryId !== categoryId ||
+              (item.periodMonth &&
+                item.periodMonth !== currentMonthStart.slice(0, 7)),
+          ),
           budget,
         ],
       }));
@@ -924,19 +959,17 @@ export function Dashboard({
 
           {activePage === "overview" && (
             <OverviewPage
-              data={data}
-              monthExpenses={monthExpenses}
-              spendingByCategory={spendingByCategory}
-              spendingByMember={spendingByMember}
+              data={{ ...data, budgets: currentBudgets }}
+              rangeStartMonth={rangeStartMonth}
+              rangeEndMonth={rangeEndMonth}
+              onRangeChange={(start, end) => {
+                setRangeStartMonth(start);
+                setRangeEndMonth(end);
+              }}
               memberName={memberName}
               canEdit={canEditExpense}
               canDelete={canDeleteExpense}
               onDeleteExpense={deleteExpense}
-              totalMonth={totalMonth}
-              totalBudget={totalBudget}
-              remaining={remaining}
-              savingsPercent={savingsPercent}
-              monthName={monthName}
               onOpenExpenses={() => navigateTo("expenses")}
               onEditExpense={openEditExpense}
               onAddExpense={openAddExpense}
@@ -1022,17 +1055,12 @@ function pageTitle(page: PageKey) {
 
 type OverviewPageProps = {
   data: DashboardData;
-  monthExpenses: Expense[];
-  spendingByCategory: (Category & { total: number })[];
-  spendingByMember: (Member & { total: number; byCategory: Record<string, number> })[];
+  rangeStartMonth: string;
+  rangeEndMonth: string;
+  onRangeChange: (start: string, end: string) => void;
   memberName: (id?: string) => string;
   canEdit: () => boolean;
   canDelete: (expense: Expense) => boolean;
-  totalMonth: number;
-  totalBudget: number;
-  remaining: number;
-  savingsPercent: number;
-  monthName: string;
   onOpenExpenses: () => void;
   onEditExpense: (expense: Expense) => void;
   onAddExpense: () => void;
@@ -1040,63 +1068,219 @@ type OverviewPageProps = {
   onDeleteExpense: (expense: Expense) => void;
 };
 
+type RangePreset = "this-month" | "previous-month" | "custom";
+
+function MonthRangePicker({
+  options,
+  startMonth,
+  endMonth,
+  onRangeChange,
+  onClose,
+}: {
+  options: { value: string; label: string }[];
+  startMonth: string;
+  endMonth: string;
+  onRangeChange: (start: string, end: string) => void;
+  onClose: () => void;
+}) {
+  const [pendingStart, setPendingStart] = useState(startMonth);
+  const [selectingEnd, setSelectingEnd] = useState(false);
+
+  function selectMonth(month: string) {
+    if (!selectingEnd) {
+      setPendingStart(month);
+      setSelectingEnd(true);
+      return;
+    }
+    const nextStart = month < pendingStart ? month : pendingStart;
+    const nextEnd = month < pendingStart ? pendingStart : month;
+    onRangeChange(nextStart, nextEnd);
+    onClose();
+  }
+
+  return (
+    <div
+      className="fixed left-4 right-4 top-20 z-30 max-h-[calc(100vh-6rem)] overflow-y-auto rounded-2xl border border-[#e5dff0] bg-white p-4 shadow-[0_18px_45px_rgba(53,35,80,0.18)] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-[300px]"
+      role="dialog"
+      aria-label="เลือกช่วงเดือน"
+    >
+      <div className="mb-3">
+        <p className="text-[14px] font-bold text-[#3f4540]">เลือกช่วงเดือน</p>
+        <p className="mt-1 text-[12px] text-[#939c95]">
+          {!selectingEnd
+            ? "เลือกเดือนแรกของช่วง"
+            : `เริ่ม ${options.find((option) => option.value === pendingStart)?.label ?? pendingStart} · เลือกเดือนสิ้นสุด`}
+        </p>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {[...options].reverse().map((option) => {
+          const selected =
+            option.value === (selectingEnd ? pendingStart : startMonth) ||
+            (!selectingEnd && option.value === endMonth);
+          const inRange =
+            !selectingEnd &&
+            option.value > startMonth &&
+            option.value < endMonth;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => selectMonth(option.value)}
+              className={`rounded-xl border px-2 py-2.5 text-[12px] font-medium transition ${
+                selected
+                  ? "border-[#8b5cf6] bg-[#7c3aed] text-white"
+                  : inRange
+                    ? "border-[#ddd0ff] bg-[#f4eeff] text-[#6d28d9]"
+                    : "border-[#ecefeb] bg-white text-[#667169] hover:border-[#cdbbfa] hover:bg-[#faf8ff]"
+              }`}
+            >
+              {new Intl.DateTimeFormat("th-TH", {
+                month: "short",
+              }).format(new Date(`${option.value}-01T00:00:00`))}
+              <span className="mt-0.5 block text-[10px] opacity-75">
+                {Number(option.value.slice(0, 4)) + 543}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-[11px] leading-4 text-[#a0a8a2]">
+        คลิกเดือนเริ่มต้น แล้วเลือกเดือนสิ้นสุด ระบบจะรวมทั้งสองเดือน
+      </p>
+    </div>
+  );
+}
+
 function OverviewPage({
   data,
-  monthExpenses,
-  spendingByCategory,
-  spendingByMember,
+  rangeStartMonth,
+  rangeEndMonth,
+  onRangeChange,
   memberName,
   canEdit,
   canDelete,
   onDeleteExpense,
-  totalMonth,
-  totalBudget,
-  remaining,
-  savingsPercent,
-  monthName,
   onOpenExpenses,
   onEditExpense,
   onAddExpense,
   onOpenBudgets,
 }: OverviewPageProps) {
-  const [chartRange, setChartRange] = useState("last30Days");
-  const [chartGrouping, setChartGrouping] = useState<"day" | "month">("day");
   const today = new Date();
-  const selectedMonth =
-    chartRange === "last30Days" ? null : new Date(`${chartRange}-01T00:00:00`);
-  const monthOptions = Array.from({ length: 12 }, (_, index) => {
-    const date = new Date(today.getFullYear(), today.getMonth() - index, 1);
-    const value = localDateString(date).slice(0, 7);
-    return {
-      value,
-      label: new Intl.DateTimeFormat("th-TH", {
-        month: "long",
-        year: "numeric",
-      }).format(date),
+  const currentMonth = localDateString(today).slice(0, 7);
+  const previousMonthDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const previousMonth = localDateString(previousMonthDate).slice(0, 7);
+  const [chartGrouping, setChartGrouping] = useState<"day" | "month">("day");
+  const [customPickerOpen, setCustomPickerOpen] = useState(false);
+  const [customSelectionActive, setCustomSelectionActive] = useState(false);
+  const monthOptions = getMonthOptions(today);
+  const rangePreset: RangePreset =
+    customSelectionActive
+      ? "custom"
+      : rangeStartMonth === currentMonth && rangeEndMonth === currentMonth
+      ? "this-month"
+      : rangeStartMonth === previousMonth && rangeEndMonth === previousMonth
+        ? "previous-month"
+        : "custom";
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!customPickerOpen) return;
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setCustomPickerOpen(false);
+    }
+    function closeOutside(event: PointerEvent) {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(event.target as Node)
+      ) {
+        setCustomPickerOpen(false);
+      }
+    }
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("pointerdown", closeOutside);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("pointerdown", closeOutside);
     };
-  });
-  const chartStart = selectedMonth
-    ? new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1)
-    : new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29);
-  const chartEnd =
-    selectedMonth &&
-    (selectedMonth.getFullYear() !== today.getFullYear() ||
-      selectedMonth.getMonth() !== today.getMonth())
-      ? new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0)
-      : today;
-  const chartStartKey = localDateString(chartStart);
-  const chartEndKey = localDateString(chartEnd);
-  const rangeExpenses = data.expenses.filter(
-    (expense) => expense.date >= chartStartKey && expense.date <= chartEndKey,
+  }, [customPickerOpen]);
+
+  function selectPreset(preset: RangePreset) {
+    setCustomSelectionActive(preset === "custom");
+    setCustomPickerOpen(preset === "custom");
+    if (preset === "this-month") {
+      onRangeChange(currentMonth, currentMonth);
+    } else if (preset === "previous-month") {
+      onRangeChange(previousMonth, previousMonth);
+    }
+  }
+  const { start: chartStart, startKey, endKey } = getMonthRangeBounds(
+    rangeStartMonth,
+    rangeEndMonth,
+    today,
   );
+  const rangeExpenses = data.expenses.filter(
+    (expense) => expense.date >= startKey && expense.date <= endKey,
+  );
+  const rangeBudgets = data.budgets
+    .filter((budget) => {
+      const periodMonth = budget.periodMonth ?? currentMonth;
+      return periodMonth >= rangeStartMonth && periodMonth <= rangeEndMonth;
+    });
+  const totalMonth = rangeExpenses.reduce(
+    (total, expense) => total + expense.amount,
+    0,
+  );
+  const totalBudget = rangeBudgets.reduce(
+    (total, budget) => total + budget.amount,
+    0,
+  );
+  const remaining = totalBudget - totalMonth;
+  const savingsPercent =
+    totalBudget > 0 ? Math.max(0, Math.round((remaining / totalBudget) * 100)) : 0;
+  const spendingByCategory = data.categories
+    .map((category) => ({
+      ...category,
+      total: rangeExpenses
+        .filter((expense) => expense.categoryId === category.id)
+        .reduce((sum, expense) => sum + expense.amount, 0),
+    }))
+    .filter((category) => category.total > 0)
+    .sort((a, b) => b.total - a.total);
+  const spendingByMember = data.members
+    .filter((member) => !member.removedAt)
+    .map((member) => {
+      const rows = rangeExpenses.filter((expense) => expense.userId === member.id);
+      return {
+        ...member,
+        total: rows.reduce((sum, expense) => sum + expense.amount, 0),
+        byCategory: Object.fromEntries(
+          data.categories.map((category) => [
+            category.id,
+            rows
+              .filter((expense) => expense.categoryId === category.id)
+              .reduce((sum, expense) => sum + expense.amount, 0),
+          ]),
+        ) as Record<string, number>,
+      };
+    })
+    .sort((a, b) => b.total - a.total);
+  const rangeBudgetByCategory = data.categories
+    .map((category) => ({
+      category,
+      amount: rangeBudgets
+        .filter((budget) => budget.categoryId === category.id)
+        .reduce((sum, budget) => sum + budget.amount, 0),
+    }))
+    .filter((item) => item.amount > 0);
+  const trackedRangeBudgets = rangeBudgetByCategory.slice(0, 5);
   const chartData =
     chartGrouping === "day"
       ? Array.from(
           {
             length:
               Math.round(
-                (new Date(`${chartEndKey}T00:00:00`).getTime() -
-                  new Date(`${chartStartKey}T00:00:00`).getTime()) /
+                (new Date(`${endKey}T00:00:00`).getTime() -
+                  new Date(`${startKey}T00:00:00`).getTime()) /
                   86_400_000,
               ) + 1,
           },
@@ -1113,16 +1297,33 @@ function OverviewPage({
             };
           },
         )
-      : Object.entries(
-          rangeExpenses.reduce<Record<string, number>>((totals, expense) => {
-            const monthKey = expense.date.slice(0, 7);
-            totals[monthKey] = (totals[monthKey] ?? 0) + expense.amount;
-            return totals;
-          }, {}),
-        ).map(([monthKey, total]) => {
+      : Array.from(
+          {
+            length:
+              (Number(rangeEndMonth.slice(0, 4)) -
+                Number(rangeStartMonth.slice(0, 4))) *
+                12 +
+              Number(rangeEndMonth.slice(5, 7)) -
+              Number(rangeStartMonth.slice(5, 7)) +
+              1,
+          },
+          (_, index) => {
+            const start = new Date(chartStart);
+            const date = new Date(
+              start.getFullYear(),
+              start.getMonth() + index,
+              1,
+            );
+            const monthKey = localDateString(date).slice(0, 7);
+            const total = rangeExpenses
+              .filter((expense) => expense.date.startsWith(monthKey))
+              .reduce((sum, expense) => sum + expense.amount, 0);
+            return { date: `${monthKey}-01`, label: "", monthKey, total };
+          },
+        ).map(({ date: monthDate, monthKey, total }) => {
           const date = new Date(`${monthKey}-01T00:00:00`);
           return {
-            date: `${monthKey}-01`,
+            date: monthDate,
             label: new Intl.DateTimeFormat("th-TH", {
               month: "short",
               year: "2-digit",
@@ -1131,11 +1332,13 @@ function OverviewPage({
           };
         });
   const maxSpending = Math.max(...chartData.map((item) => item.total), 1000);
-  const chartRangeLabel =
-    monthOptions.find((option) => option.value === chartRange)?.label ??
-    "30 วันล่าสุด";
+  const chartRangeLabel = formatMonthRange(
+    rangeStartMonth,
+    rangeEndMonth,
+    monthOptions,
+  );
   const chartGroupingLabel = chartGrouping === "day" ? "รายวัน" : "รายเดือน";
-  const recentExpenses = [...monthExpenses]
+  const recentExpenses = [...rangeExpenses]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5);
 
@@ -1157,9 +1360,9 @@ function OverviewPage({
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          label="รายจ่ายเดือนนี้"
+          label="รายจ่ายในช่วง"
           value={currency(totalMonth)}
-          helper={monthName}
+          helper={chartRangeLabel}
           icon={Wallet}
           iconBg="bg-[#efe7ff]"
           iconColor="text-[#7c3aed]"
@@ -1168,16 +1371,16 @@ function OverviewPage({
         <SummaryCard
           label="งบประมาณทั้งหมด"
           value={currency(totalBudget)}
-          helper="งบที่ตั้งไว้เดือนนี้"
+          helper={`งบที่ตั้งไว้ในช่วง ${chartRangeLabel}`}
           icon={SlidersHorizontal}
           iconBg="bg-[#f2edfa]"
           iconColor="text-[#8774ad]"
-          delta={<span className="text-[#8a7aa9]">{data.budgets.length} หมวดหมู่</span>}
+          delta={<span className="text-[#8a7aa9]">{rangeBudgetByCategory.length} หมวดหมู่</span>}
         />
         <SummaryCard
           label="งบคงเหลือ"
           value={currency(remaining)}
-          helper="ใช้ได้จนถึงสิ้นเดือน"
+          helper="ใช้ได้ภายในช่วงที่เลือก"
           icon={remaining >= 0 ? ArrowDownLeft : ArrowUpRight}
           iconBg={remaining >= 0 ? "bg-[#edf4e8]" : "bg-[#fff0ec]"}
           iconColor={remaining >= 0 ? "text-[#719557]" : "text-[#ca715b]"}
@@ -1225,29 +1428,57 @@ function OverviewPage({
                   className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b958e]"
                 />
               </label>
-              <label className="relative">
-                <span className="sr-only">ช่วงเวลาของภาพรวม</span>
-                <CalendarDays
-                  size={13}
-                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#758078]"
-                />
-                <select
-                  value={chartRange}
-                  onChange={(event) => setChartRange(event.target.value)}
-                  className="appearance-none rounded-lg border border-[#e8ece8] bg-[#f5f7f4] py-1.5 pl-7 pr-7 text-[13px] font-medium text-[#657168] outline-none focus:border-[#a78bfa]"
-                >
-                  <option value="last30Days">30 วันล่าสุด</option>
-                  {monthOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
+              <div ref={pickerRef} className="relative flex items-center" data-month-picker>
+                <label className="relative">
+                  <span className="sr-only">ช่วงเวลาของภาพรวม</span>
+                  <CalendarDays
+                    size={13}
+                    className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[#758078]"
+                  />
+                  <select
+                    aria-label="ช่วงเวลา"
+                    value={rangePreset}
+                    onChange={(event) =>
+                      selectPreset(event.target.value as RangePreset)
+                    }
+                    className="max-w-[220px] appearance-none rounded-lg border border-[#e8ece8] bg-[#f5f7f4] py-1.5 pl-7 pr-7 text-[13px] font-medium text-[#657168] outline-none focus:border-[#a78bfa]"
+                  >
+                    <option value="this-month">เดือนนี้</option>
+                    <option value="previous-month">เดือนที่แล้ว</option>
+                    <option value="custom">
+                      {rangePreset === "custom"
+                        ? `กำหนดเอง · ${formatMonthRange(
+                            rangeStartMonth,
+                            rangeEndMonth,
+                            monthOptions,
+                          )}`
+                        : "กำหนดเอง"}
                     </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={13}
-                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b958e]"
-                />
-              </label>
+                  </select>
+                  <ChevronDown
+                    size={13}
+                    className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#8b958e]"
+                  />
+                </label>
+                {rangePreset === "custom" && !customPickerOpen && (
+                  <button
+                    type="button"
+                    onClick={() => setCustomPickerOpen(true)}
+                    className="ml-2 inline-flex items-center rounded-lg border border-[#ded4ef] bg-white px-2 py-1.5 text-[12px] font-semibold text-[#6d28d9] hover:bg-[#f8f4ff]"
+                  >
+                    เลือกช่วง
+                  </button>
+                )}
+                {customPickerOpen && (
+                  <MonthRangePicker
+                    options={monthOptions}
+                    startMonth={rangeStartMonth}
+                    endMonth={rangeEndMonth}
+                    onRangeChange={onRangeChange}
+                    onClose={() => setCustomPickerOpen(false)}
+                  />
+                )}
+              </div>
             </div>
           </div>
           <div className="h-[218px] w-full sm:h-[250px]">
@@ -1259,7 +1490,11 @@ function OverviewPage({
                   tick={{ fill: "#a1aaa3", fontSize: 13 }}
                   axisLine={false}
                   tickLine={false}
-                  interval={chartGrouping === "day" ? 4 : 0}
+                  interval={
+                    chartGrouping === "day"
+                      ? Math.max(0, Math.ceil(chartData.length / 7) - 1)
+                      : 0
+                  }
                 />
                 <YAxis
                   tick={{ fill: "#a1aaa3", fontSize: 13 }}
@@ -1304,7 +1539,7 @@ function OverviewPage({
           <div className="mb-4 flex items-start justify-between">
             <div>
               <h3 className="text-[18px] font-bold">ค่าใช้จ่ายตามหมวดหมู่</h3>
-              <p className="mt-1 text-[14px] text-[#99a19b]">สัดส่วนรายจ่ายเดือนนี้</p>
+              <p className="mt-1 text-[14px] text-[#99a19b]">สัดส่วนรายจ่ายในช่วง {chartRangeLabel}</p>
             </div>
             <button aria-label="ตัวเลือกกราฟ" className="rounded-lg p-1.5 text-[#9ca59f] hover:bg-[#f6f8f6]">
               <MoreHorizontal size={18} />
@@ -1362,7 +1597,7 @@ function OverviewPage({
               </div>
             </>
           ) : (
-            <EmptyState icon={Shapes} title="ยังไม่มีรายจ่ายในเดือนนี้" detail="เพิ่มรายการเพื่อดูสัดส่วนค่าใช้จ่าย" />
+            <EmptyState icon={Shapes} title="ยังไม่มีรายจ่ายในช่วงนี้" detail="เพิ่มรายการหรือลองเลือกช่วงเวลาอื่น" />
           )}
         </div>
       </section>
@@ -1371,7 +1606,7 @@ function OverviewPage({
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h3 className="text-[18px] font-bold">ค่าใช้จ่ายตามสมาชิก</h3>
-            <p className="mt-1 text-[14px] text-[#99a19b]">แยกตามหมวดหมู่ของแต่ละคน เดือนนี้</p>
+            <p className="mt-1 text-[14px] text-[#99a19b]">แยกตามหมวดหมู่ของแต่ละคนในช่วงที่เลือก</p>
           </div>
           <span className="flex items-center gap-1.5 rounded-lg bg-[#f5f7f4] px-2.5 py-1.5 text-[13px] text-[#758078]">
             <Users size={12} /> {spendingByMember.length} คน
@@ -1433,7 +1668,7 @@ function OverviewPage({
             </div>
           </div>
         ) : (
-          <EmptyState icon={Users} title="ยังไม่มีรายจ่ายของสมาชิกในเดือนนี้" detail="เพิ่มรายการเพื่อดูค่าใช้จ่ายแยกตามสมาชิก" />
+          <EmptyState icon={Users} title="ยังไม่มีรายจ่ายของสมาชิกในช่วงนี้" detail="เพิ่มรายการหรือลองเลือกช่วงเวลาอื่น" />
         )}
       </section>
 
@@ -1463,25 +1698,23 @@ function OverviewPage({
           <div className="mb-5 flex items-start justify-between">
             <div>
               <h3 className="text-[18px] font-bold">ติดตามงบประมาณ</h3>
-              <p className="mt-1 text-[14px] text-[#99a19b]">ภาพรวมการใช้งบเดือนนี้</p>
+              <p className="mt-1 text-[14px] text-[#99a19b]">ภาพรวมการใช้งบในช่วง {chartRangeLabel}</p>
             </div>
             <button onClick={onOpenBudgets} className="rounded-lg p-1.5 text-[#9ca59f]" aria-label="งบประมาณ">
               <MoreHorizontal size={18} />
             </button>
           </div>
           <div className="space-y-[18px]">
-            {data.budgets.slice(0, 5).map((budget) => {
-              const category = data.categories.find((item) => item.id === budget.categoryId);
-              if (!category) return null;
-              const spent = monthExpenses
-                .filter((expense) => expense.categoryId === budget.categoryId)
+            {trackedRangeBudgets.map(({ category, amount: budgetAmount }) => {
+              const spent = rangeExpenses
+                .filter((expense) => expense.categoryId === category.id)
                 .reduce((sum, expense) => sum + expense.amount, 0);
-              const status = getBudgetStatus(spent, budget.amount);
+              const status = getBudgetStatus(spent, budgetAmount);
               const ratio = Math.min(100, status.percentage);
               const color = getCategoryColor(data.categories.indexOf(category));
               const Icon = getCategoryIcon(category.icon);
               return (
-                <div key={budget.id}>
+                <div key={category.id}>
                   <div className="mb-2 flex items-center gap-2">
                     <span className="flex size-7 items-center justify-center rounded-lg" style={{ color, backgroundColor: `${color}18` }}>
                       <Icon size={14} />
@@ -1496,13 +1729,13 @@ function OverviewPage({
                       style={{ width: `${ratio}%`, backgroundColor: status.progressColor }}
                     />
                   </div>
-                  <p className="mt-1 text-right text-[11px] text-[#a0a8a2]">งบ {currency(budget.amount)}</p>
+                  <p className="mt-1 text-right text-[11px] text-[#a0a8a2]">งบ {currency(budgetAmount)}</p>
                 </div>
               );
             })}
           </div>
-          {data.budgets.length > 5 && (
-            <button className="mt-4 flex items-center gap-1 text-[13px] font-semibold text-[#7c3aed] hover:underline">
+          {rangeBudgetByCategory.length > 5 && (
+            <button onClick={onOpenBudgets} className="mt-4 flex items-center gap-1 text-[13px] font-semibold text-[#7c3aed] hover:underline">
               จัดการงบประมาณ <ArrowRight size={13} />
             </button>
           )}

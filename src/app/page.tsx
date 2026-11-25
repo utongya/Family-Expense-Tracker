@@ -129,6 +129,15 @@ async function DashboardContent() {
   );
   const dataStart =
     [monthStart, last30DaysStart, historyStart].sort()[0];
+  const budgetHistoryStart = bangkokDateString(
+    new Date(
+      Date.UTC(
+        todayPart("year"),
+        todayPart("month") - 12,
+        1,
+      ),
+    ),
+  );
 
   const [
     { data: categories, error: categoryError },
@@ -140,8 +149,10 @@ async function DashboardContent() {
     supabase.from("categories").select("id, name, icon").order("created_at"),
     supabase
       .from("budgets")
-      .select("id, category_id, amount")
-      .eq("period_month", monthStart),
+      .select("id, category_id, amount, period_month")
+      .gte("period_month", budgetHistoryStart)
+      .lte("period_month", monthStart)
+      .order("period_month"),
     supabase
       .from("expenses")
       .select("id, category_id, amount, expense_date, note, user_id")
@@ -177,6 +188,7 @@ async function DashboardContent() {
       id: budget.id,
       categoryId: budget.category_id,
       amount: Number(budget.amount),
+      periodMonth: budget.period_month,
     })),
     expenses: (expenses ?? []).map((expense) => ({
       id: expense.id,
@@ -189,6 +201,9 @@ async function DashboardContent() {
   };
   const monthRows = initialData.expenses.filter(
     (expense) => expense.date >= monthStart,
+  );
+  const currentBudgets = initialData.budgets.filter(
+    (budget) => budget.periodMonth === monthStart.slice(0, 7),
   );
   const dailyTotals = Array.from({ length: 30 }, (_, index) => {
     const date = new Date(
@@ -205,7 +220,7 @@ async function DashboardContent() {
   });
   const initialSummary: DashboardSummary = {
     totalMonth: monthRows.reduce((sum, expense) => sum + expense.amount, 0),
-    totalBudget: initialData.budgets.reduce(
+    totalBudget: currentBudgets.reduce(
       (sum, budget) => sum + budget.amount,
       0,
     ),

@@ -9,6 +9,7 @@ const categorySeeds = [
   ["pets", "คชจ.ฮาโกะ/ฮาซิ", "paw-print"],
   ["household", "ของใช้เบ็ดเตล็ด", "package"],
   ["travel", "ท่องเที่ยว/สันทนาการ", "plane"],
+  ["health-beauty", "สุขภาพ และความงาม", "heart-pulse"],
   ["other", "อื่น ๆ", "shapes"],
 ];
 
@@ -44,6 +45,7 @@ export function createDemoData(): DashboardData {
       { id: "budget-pets", categoryId: "pets", amount: 3500 },
       { id: "budget-household", categoryId: "household", amount: 2800 },
       { id: "budget-travel", categoryId: "travel", amount: 4200 },
+      { id: "budget-health-beauty", categoryId: "health-beauty", amount: 4000 },
       { id: "budget-other", categoryId: "other", amount: 3000 },
     ],
     expenses: [
